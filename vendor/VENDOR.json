@@ -1,0 +1,1089 @@
+{
+  "generated_by": "scripts/vendor-mcp.mjs",
+  "source": "node_modules (pnpm/npm 安装产物)",
+  "entry_packages": [
+    "open-websearch",
+    "bing-cn-mcp",
+    "mcp-pubmed-llm-server",
+    "openalex-mcp-server",
+    "unified-trial-mcp",
+    "@xiaoyibao_npm/knows-mcp-server",
+    "get-biji-mcp"
+  ],
+  "package_count": 265,
+  "bytes": 48692695,
+  "strategy": "跨平台 vendor：保留 linux/darwin/win32 × x64/arm64 六平台原生二进制；裁掉 sourcemap/类型声明/测试/文档/非目标平台",
+  "kept_platforms": [
+    "linux_x64",
+    "linux_arm64",
+    "darwin_x64",
+    "darwin_arm64",
+    "win32_x64",
+    "win32_arm64"
+  ],
+  "kept_pdfjs_version": "v1.10.100",
+  "packages": [
+    {
+      "name": "koffi",
+      "bytes": 28750096
+    },
+    {
+      "name": "pdf-parse",
+      "bytes": 28345398
+    },
+    {
+      "name": "get-biji-mcp",
+      "bytes": 12637616
+    },
+    {
+      "name": "web-streams-polyfill",
+      "bytes": 9036205
+    },
+    {
+      "name": "get-biji-mcp/node_modules/zod",
+      "bytes": 6148944
+    },
+    {
+      "name": "get-biji-mcp/node_modules/@modelcontextprotocol/sdk",
+      "bytes": 5149228
+    },
+    {
+      "name": "@modelcontextprotocol/sdk",
+      "bytes": 4490363
+    },
+    {
+      "name": "get-biji-mcp/node_modules/@modelcontextprotocol/sdk/node_modules/zod",
+      "bytes": 3594196
+    },
+    {
+      "name": "zod",
+      "bytes": 3594196
+    },
+    {
+      "name": "jsdom",
+      "bytes": 3231391
+    },
+    {
+      "name": "tldts",
+      "bytes": 2977311
+    },
+    {
+      "name": "@types/node",
+      "bytes": 2546175
+    },
+    {
+      "name": "@asamuzakjp/css-color",
+      "bytes": 2097817
+    },
+    {
+      "name": "axios",
+      "bytes": 1983343
+    },
+    {
+      "name": "undici",
+      "bytes": 1658921
+    },
+    {
+      "name": "mcp-pubmed-llm-server",
+      "bytes": 1310755
+    },
+    {
+      "name": "hono",
+      "bytes": 1294526
+    },
+    {
+      "name": "parse5",
+      "bytes": 1236424
+    },
+    {
+      "name": "ajv",
+      "bytes": 1033496
+    },
+    {
+      "name": "cheerio",
+      "bytes": 1011246
+    },
+    {
+      "name": "async",
+      "bytes": 807741
+    },
+    {
+      "name": "lru-cache",
+      "bytes": 804301
+    },
+    {
+      "name": "open-websearch",
+      "bytes": 772323
+    },
+    {
+      "name": "htmlparser2",
+      "bytes": 697977
+    },
+    {
+      "name": "parse5/node_modules/entities",
+      "bytes": 540551
+    },
+    {
+      "name": "unified-trial-mcp",
+      "bytes": 437765
+    },
+    {
+      "name": "entities",
+      "bytes": 412892
+    },
+    {
+      "name": "body-parser",
+      "bytes": 409857
+    },
+    {
+      "name": "htmlparser2/node_modules/entities",
+      "bytes": 392254
+    },
+    {
+      "name": "qs",
+      "bytes": 374851
+    },
+    {
+      "name": "ip-address",
+      "bytes": 368767
+    },
+    {
+      "name": "raw-body",
+      "bytes": 362680
+    },
+    {
+      "name": "iconv-lite",
+      "bytes": 348518
+    },
+    {
+      "name": "body-parser/node_modules/iconv-lite",
+      "bytes": 344185
+    },
+    {
+      "name": "raw-body/node_modules/iconv-lite",
+      "bytes": 344185
+    },
+    {
+      "name": "get-biji-mcp/node_modules/iconv-lite",
+      "bytes": 335941
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/iconv-lite",
+      "bytes": 335941
+    },
+    {
+      "name": "form-data",
+      "bytes": 307712
+    },
+    {
+      "name": "decimal.js",
+      "bytes": 284347
+    },
+    {
+      "name": "winston",
+      "bytes": 274893
+    },
+    {
+      "name": "css-select",
+      "bytes": 268051
+    },
+    {
+      "name": "tough-cookie",
+      "bytes": 227724
+    },
+    {
+      "name": "tr46",
+      "bytes": 225902
+    },
+    {
+      "name": "mime-db",
+      "bytes": 225566
+    },
+    {
+      "name": "tldts-core",
+      "bytes": 222678
+    },
+    {
+      "name": "fast-uri",
+      "bytes": 220886
+    },
+    {
+      "name": "zod-to-json-schema",
+      "bytes": 219264
+    },
+    {
+      "name": "cssstyle",
+      "bytes": 216766
+    },
+    {
+      "name": "get-biji-mcp/node_modules/express",
+      "bytes": 215553
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/express",
+      "bytes": 215553
+    },
+    {
+      "name": "jose",
+      "bytes": 210660
+    },
+    {
+      "name": "form-data/node_modules/mime-db",
+      "bytes": 205539
+    },
+    {
+      "name": "get-biji-mcp/node_modules/mime-db",
+      "bytes": 205539
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/mime-db",
+      "bytes": 205539
+    },
+    {
+      "name": "json-schema-typed",
+      "bytes": 197188
+    },
+    {
+      "name": "domutils",
+      "bytes": 166738
+    },
+    {
+      "name": "saxes",
+      "bytes": 163774
+    },
+    {
+      "name": "encoding-sniffer",
+      "bytes": 162226
+    },
+    {
+      "name": "express-rate-limit",
+      "bytes": 154719
+    },
+    {
+      "name": "@mozilla/readability",
+      "bytes": 154574
+    },
+    {
+      "name": "logform",
+      "bytes": 152462
+    },
+    {
+      "name": "ws",
+      "bytes": 151410
+    },
+    {
+      "name": "eventsource",
+      "bytes": 147304
+    },
+    {
+      "name": "fecha",
+      "bytes": 143859
+    },
+    {
+      "name": "@hono/node-server",
+      "bytes": 138339
+    },
+    {
+      "name": "readable-stream",
+      "bytes": 123971
+    },
+    {
+      "name": "eventsource-parser",
+      "bytes": 123553
+    },
+    {
+      "name": "undici-types",
+      "bytes": 120779
+    },
+    {
+      "name": "node-fetch",
+      "bytes": 107319
+    },
+    {
+      "name": "rrweb-cssom",
+      "bytes": 105478
+    },
+    {
+      "name": "@csstools/css-color-parser",
+      "bytes": 105150
+    },
+    {
+      "name": "nwsapi",
+      "bytes": 104024
+    },
+    {
+      "name": "object-inspect",
+      "bytes": 102920
+    },
+    {
+      "name": "express",
+      "bytes": 99774
+    },
+    {
+      "name": "whatwg-url",
+      "bytes": 98558
+    },
+    {
+      "name": "@csstools/color-helpers",
+      "bytes": 80870
+    },
+    {
+      "name": "get-biji-mcp/node_modules/body-parser",
+      "bytes": 79297
+    },
+    {
+      "name": "dotenv",
+      "bytes": 76591
+    },
+    {
+      "name": "domhandler",
+      "bytes": 75339
+    },
+    {
+      "name": "@csstools/css-tokenizer",
+      "bytes": 72983
+    },
+    {
+      "name": "@csstools/css-calc",
+      "bytes": 71012
+    },
+    {
+      "name": "openalex-mcp-server",
+      "bytes": 67315
+    },
+    {
+      "name": "css-what",
+      "bytes": 66038
+    },
+    {
+      "name": "ipaddr.js",
+      "bytes": 64424
+    },
+    {
+      "name": "cheerio-select",
+      "bytes": 62620
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/body-parser",
+      "bytes": 60814
+    },
+    {
+      "name": "path-to-regexp",
+      "bytes": 59680
+    },
+    {
+      "name": "xmlchars",
+      "bytes": 58957
+    },
+    {
+      "name": "proxy-addr",
+      "bytes": 58471
+    },
+    {
+      "name": "get-biji-mcp/node_modules/debug",
+      "bytes": 57509
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/debug",
+      "bytes": 57509
+    },
+    {
+      "name": "symbol-tree",
+      "bytes": 57073
+    },
+    {
+      "name": "ajv-formats",
+      "bytes": 56763
+    },
+    {
+      "name": "winston-transport",
+      "bytes": 54595
+    },
+    {
+      "name": "mime",
+      "bytes": 51738
+    },
+    {
+      "name": "@so-ric/colorspace",
+      "bytes": 51716
+    },
+    {
+      "name": "get-biji-mcp/node_modules/send",
+      "bytes": 50398
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/send",
+      "bytes": 50398
+    },
+    {
+      "name": "content-disposition",
+      "bytes": 48581
+    },
+    {
+      "name": "color-convert",
+      "bytes": 47848
+    },
+    {
+      "name": "negotiator",
+      "bytes": 47543
+    },
+    {
+      "name": "router",
+      "bytes": 46851
+    },
+    {
+      "name": "get-intrinsic",
+      "bytes": 46542
+    },
+    {
+      "name": "@csstools/css-parser-algorithms",
+      "bytes": 45381
+    },
+    {
+      "name": "type-is",
+      "bytes": 44405
+    },
+    {
+      "name": "request-filtering-agent",
+      "bytes": 42851
+    },
+    {
+      "name": "debug",
+      "bytes": 42793
+    },
+    {
+      "name": "nth-check",
+      "bytes": 42555
+    },
+    {
+      "name": "@colors/colors",
+      "bytes": 42319
+    },
+    {
+      "name": "safer-buffer",
+      "bytes": 42299
+    },
+    {
+      "name": "proxy-addr/node_modules/ipaddr.js",
+      "bytes": 42145
+    },
+    {
+      "name": "logform/node_modules/@colors/colors",
+      "bytes": 41466
+    },
+    {
+      "name": "http-proxy-agent",
+      "bytes": 41222
+    },
+    {
+      "name": "agent-base",
+      "bytes": 34582
+    },
+    {
+      "name": "punycode",
+      "bytes": 33514
+    },
+    {
+      "name": "formdata-polyfill",
+      "bytes": 32220
+    },
+    {
+      "name": "send",
+      "bytes": 32200
+    },
+    {
+      "name": "safe-buffer",
+      "bytes": 32101
+    },
+    {
+      "name": "function-bind",
+      "bytes": 31427
+    },
+    {
+      "name": "@dabh/diagnostics",
+      "bytes": 31284
+    },
+    {
+      "name": "follow-redirects",
+      "bytes": 30959
+    },
+    {
+      "name": "safe-stable-stringify",
+      "bytes": 30687
+    },
+    {
+      "name": "@xiaoyibao_npm/knows-mcp-server",
+      "bytes": 29746
+    },
+    {
+      "name": "node-domexception",
+      "bytes": 29162
+    },
+    {
+      "name": "dom-serializer",
+      "bytes": 28813
+    },
+    {
+      "name": "jsdom/node_modules/https-proxy-agent",
+      "bytes": 27706
+    },
+    {
+      "name": "open-websearch/node_modules/https-proxy-agent",
+      "bytes": 27706
+    },
+    {
+      "name": "get-biji-mcp/node_modules/negotiator",
+      "bytes": 27375
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/negotiator",
+      "bytes": 27375
+    },
+    {
+      "name": "asynckit",
+      "bytes": 27362
+    },
+    {
+      "name": "depd",
+      "bytes": 27117
+    },
+    {
+      "name": "color",
+      "bytes": 26347
+    },
+    {
+      "name": "https-proxy-agent",
+      "bytes": 26008
+    },
+    {
+      "name": "get-biji-mcp/node_modules/serve-static",
+      "bytes": 25518
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/serve-static",
+      "bytes": 25518
+    },
+    {
+      "name": "webidl-conversions",
+      "bytes": 24242
+    },
+    {
+      "name": "http-proxy-agent/node_modules/agent-base",
+      "bytes": 23962
+    },
+    {
+      "name": "jsdom/node_modules/agent-base",
+      "bytes": 23962
+    },
+    {
+      "name": "open-websearch/node_modules/agent-base",
+      "bytes": 23962
+    },
+    {
+      "name": "bing-cn-mcp",
+      "bytes": 23767
+    },
+    {
+      "name": "has-symbols",
+      "bytes": 23409
+    },
+    {
+      "name": "cookie",
+      "bytes": 23382
+    },
+    {
+      "name": "body-parser/node_modules/content-type",
+      "bytes": 23136
+    },
+    {
+      "name": "express/node_modules/content-type",
+      "bytes": 23136
+    },
+    {
+      "name": "negotiator/node_modules/content-type",
+      "bytes": 23136
+    },
+    {
+      "name": "type-is/node_modules/content-type",
+      "bytes": 23136
+    },
+    {
+      "name": "mime-types",
+      "bytes": 22871
+    },
+    {
+      "name": "side-channel",
+      "bytes": 22864
+    },
+    {
+      "name": "json-schema-traverse",
+      "bytes": 22220
+    },
+    {
+      "name": "fetch-blob",
+      "bytes": 21755
+    },
+    {
+      "name": "cors",
+      "bytes": 19956
+    },
+    {
+      "name": "get-biji-mcp/node_modules/finalhandler",
+      "bytes": 19149
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/finalhandler",
+      "bytes": 19149
+    },
+    {
+      "name": "get-biji-mcp/node_modules/content-disposition",
+      "bytes": 19113
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/content-disposition",
+      "bytes": 19113
+    },
+    {
+      "name": "http-errors",
+      "bytes": 19064
+    },
+    {
+      "name": "parse5-htmlparser2-tree-adapter",
+      "bytes": 18745
+    },
+    {
+      "name": "get-biji-mcp/node_modules/type-is",
+      "bytes": 18497
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/type-is",
+      "bytes": 18497
+    },
+    {
+      "name": "get-biji-mcp/node_modules/body-parser/node_modules/raw-body",
+      "bytes": 18483
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/raw-body",
+      "bytes": 18483
+    },
+    {
+      "name": "form-data/node_modules/mime-types",
+      "bytes": 18272
+    },
+    {
+      "name": "get-biji-mcp/node_modules/mime-types",
+      "bytes": 18272
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/mime-types",
+      "bytes": 18272
+    },
+    {
+      "name": "pkce-challenge",
+      "bytes": 18211
+    },
+    {
+      "name": "finalhandler",
+      "bytes": 18111
+    },
+    {
+      "name": "w3c-xmlserializer",
+      "bytes": 17973
+    },
+    {
+      "name": "has-tostringtag",
+      "bytes": 17603
+    },
+    {
+      "name": "math-intrinsics",
+      "bytes": 17323
+    },
+    {
+      "name": "call-bound",
+      "bytes": 17106
+    },
+    {
+      "name": "side-channel-list",
+      "bytes": 16973
+    },
+    {
+      "name": "accepts",
+      "bytes": 16917
+    },
+    {
+      "name": "get-biji-mcp/node_modules/accepts",
+      "bytes": 16795
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/accepts",
+      "bytes": 16795
+    },
+    {
+      "name": "whatwg-mimetype",
+      "bytes": 16721
+    },
+    {
+      "name": "cross-spawn",
+      "bytes": 16094
+    },
+    {
+      "name": "call-bind-apply-helpers",
+      "bytes": 15952
+    },
+    {
+      "name": "parse5-parser-stream",
+      "bytes": 15862
+    },
+    {
+      "name": "proxy-from-env",
+      "bytes": 15643
+    },
+    {
+      "name": "@types/cheerio",
+      "bytes": 15067
+    },
+    {
+      "name": "side-channel-weakmap",
+      "bytes": 14667
+    },
+    {
+      "name": "es-set-tostringtag",
+      "bytes": 14544
+    },
+    {
+      "name": "string_decoder",
+      "bytes": 14427
+    },
+    {
+      "name": "serve-static",
+      "bytes": 14335
+    },
+    {
+      "name": "on-finished",
+      "bytes": 13679
+    },
+    {
+      "name": "xml-name-validator",
+      "bytes": 13574
+    },
+    {
+      "name": "side-channel-map",
+      "bytes": 13348
+    },
+    {
+      "name": "whatwg-encoding",
+      "bytes": 13339
+    },
+    {
+      "name": "dunder-proto",
+      "bytes": 13003
+    },
+    {
+      "name": "fast-deep-equal",
+      "bytes": 12966
+    },
+    {
+      "name": "statuses",
+      "bytes": 12505
+    },
+    {
+      "name": "es-errors",
+      "bytes": 12324
+    },
+    {
+      "name": "bytes",
+      "bytes": 12270
+    },
+    {
+      "name": "es-object-atoms",
+      "bytes": 11967
+    },
+    {
+      "name": "html-encoding-sniffer",
+      "bytes": 11662
+    },
+    {
+      "name": "combined-stream",
+      "bytes": 11514
+    },
+    {
+      "name": "domelementtype",
+      "bytes": 11359
+    },
+    {
+      "name": "get-biji-mcp/node_modules/media-typer",
+      "bytes": 11055
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/media-typer",
+      "bytes": 11055
+    },
+    {
+      "name": "color-string",
+      "bytes": 10988
+    },
+    {
+      "name": "isexe",
+      "bytes": 10956
+    },
+    {
+      "name": "get-proto",
+      "bytes": 10840
+    },
+    {
+      "name": "etag",
+      "bytes": 10809
+    },
+    {
+      "name": "content-type",
+      "bytes": 10471
+    },
+    {
+      "name": "hasown",
+      "bytes": 10332
+    },
+    {
+      "name": "parseurl",
+      "bytes": 10299
+    },
+    {
+      "name": "fresh",
+      "bytes": 10289
+    },
+    {
+      "name": "triple-beam",
+      "bytes": 10220
+    },
+    {
+      "name": "es-define-property",
+      "bytes": 10217
+    },
+    {
+      "name": "get-biji-mcp/node_modules/fresh",
+      "bytes": 10116
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/fresh",
+      "bytes": 10116
+    },
+    {
+      "name": "data-uri-to-buffer",
+      "bytes": 10049
+    },
+    {
+      "name": "which",
+      "bytes": 9975
+    },
+    {
+      "name": "gopd",
+      "bytes": 9869
+    },
+    {
+      "name": "media-typer",
+      "bytes": 9299
+    },
+    {
+      "name": "destroy",
+      "bytes": 9018
+    },
+    {
+      "name": "range-parser",
+      "bytes": 8967
+    },
+    {
+      "name": "stack-trace",
+      "bytes": 8848
+    },
+    {
+      "name": "vary",
+      "bytes": 8747
+    },
+    {
+      "name": "get-biji-mcp/node_modules/range-parser",
+      "bytes": 8457
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/range-parser",
+      "bytes": 8457
+    },
+    {
+      "name": "delayed-stream",
+      "bytes": 8021
+    },
+    {
+      "name": "data-urls",
+      "bytes": 7834
+    },
+    {
+      "name": "encodeurl",
+      "bytes": 6980
+    },
+    {
+      "name": "ms",
+      "bytes": 6721
+    },
+    {
+      "name": "get-biji-mcp/node_modules/path-to-regexp",
+      "bytes": 6644
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/path-to-regexp",
+      "bytes": 6644
+    },
+    {
+      "name": "color-name",
+      "bytes": 6308
+    },
+    {
+      "name": "get-biji-mcp/node_modules/debug/node_modules/ms",
+      "bytes": 6266
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/debug/node_modules/ms",
+      "bytes": 6266
+    },
+    {
+      "name": "ee-first",
+      "bytes": 6259
+    },
+    {
+      "name": "fn.name",
+      "bytes": 6209
+    },
+    {
+      "name": "kuler",
+      "bytes": 6094
+    },
+    {
+      "name": "one-time",
+      "bytes": 6089
+    },
+    {
+      "name": "is-stream",
+      "bytes": 5927
+    },
+    {
+      "name": "enabled",
+      "bytes": 5893
+    },
+    {
+      "name": "forwarded",
+      "bytes": 5876
+    },
+    {
+      "name": "object-assign",
+      "bytes": 5493
+    },
+    {
+      "name": "util-deprecate",
+      "bytes": 5481
+    },
+    {
+      "name": "methods",
+      "bytes": 5288
+    },
+    {
+      "name": "get-biji-mcp/node_modules/merge-descriptors",
+      "bytes": 5081
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/merge-descriptors",
+      "bytes": 5081
+    },
+    {
+      "name": "cookie-signature",
+      "bytes": 4993
+    },
+    {
+      "name": "toidentifier",
+      "bytes": 4685
+    },
+    {
+      "name": "path-key",
+      "bytes": 4553
+    },
+    {
+      "name": "array-flatten",
+      "bytes": 4422
+    },
+    {
+      "name": "merge-descriptors",
+      "bytes": 4373
+    },
+    {
+      "name": "unpipe",
+      "bytes": 4311
+    },
+    {
+      "name": "get-biji-mcp/node_modules/cookie-signature",
+      "bytes": 4083
+    },
+    {
+      "name": "mcp-pubmed-llm-server/node_modules/cookie-signature",
+      "bytes": 4083
+    },
+    {
+      "name": "once",
+      "bytes": 4046
+    },
+    {
+      "name": "setprototypeof",
+      "bytes": 4025
+    },
+    {
+      "name": "inherits",
+      "bytes": 3958
+    },
+    {
+      "name": "is-potential-custom-element-name",
+      "bytes": 3918
+    },
+    {
+      "name": "utils-merge",
+      "bytes": 3720
+    },
+    {
+      "name": "escape-html",
+      "bytes": 3660
+    },
+    {
+      "name": "node-ensure",
+      "bytes": 3627
+    },
+    {
+      "name": "require-from-string",
+      "bytes": 3422
+    },
+    {
+      "name": "@types/triple-beam",
+      "bytes": 3361
+    },
+    {
+      "name": "wrappy",
+      "bytes": 2961
+    },
+    {
+      "name": "is-promise",
+      "bytes": 2958
+    },
+    {
+      "name": "shebang-regex",
+      "bytes": 2828
+    },
+    {
+      "name": "text-hex",
+      "bytes": 2718
+    },
+    {
+      "name": "shebang-command",
+      "bytes": 2556
+    },
+    {
+      "name": "boolbase",
+      "bytes": 1330
+    }
+  ],
+  "missing": [],
+  "license_note": "各包许可证随包保留（见各包目录内 LICENSE）。发行时须列明第三方许可。"
+}

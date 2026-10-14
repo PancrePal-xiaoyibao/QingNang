@@ -17,6 +17,13 @@ node_modules/
 .venv/
 .venv
 
+# ── 例外：vendor/ 是【随仓库分发】的离线依赖（ADR-015）────────────
+# 目的：一次 clone → 不跑 npm → 直接起 MCP。故必须入库。
+# 上面的 `node_modules/` 会连带挡掉 vendor/node_modules/，这里重新放行。
+!vendor/node_modules/
+!vendor/node_modules/**
+!vendor/VENDOR.json
+
 # ── 运行时与缓存 ──────────────────────────────────────────────
 __pycache__/
 *.py[cod]

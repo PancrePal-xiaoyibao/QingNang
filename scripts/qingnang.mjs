@@ -154,10 +154,27 @@ function findServer(id) {
 }
 
 /** 在 node_modules 里定位包入口（bin → main → 常见回退） */
+// 包解析根：vendor 优先（离线可用）→ node_modules（开发态回退）
+// 这确保「一次 clone → 立刻可用」，不依赖 npm 网络。
+function pkgRoots() {
+  const roots = [join(REPO, 'vendor', 'node_modules')]
+  const nm = join(REPO, 'node_modules')
+  if (existsSync(nm)) roots.push(nm)
+  return roots
+}
+
+function pkgDir(pkg) {
+  for (const r of pkgRoots()) {
+    const d = join(r, ...pkg.split('/'))
+    if (existsSync(join(d, 'package.json'))) return d
+  }
+  return null
+}
+
 function findEntry(pkg) {
-  const dir = join(REPO, 'node_modules', ...pkg.split('/'))
+  const dir = pkgDir(pkg)
+  if (!dir) return null
   const pj = join(dir, 'package.json')
-  if (!existsSync(pj)) return null
   let d
   try { d = JSON.parse(readFileSync(pj, 'utf8')) } catch { return null }
   const cands = []
@@ -522,7 +539,27 @@ function buildJs(opts) {
   }
   ok(`Node v${nodeV}`)
 
-  // 降级链：pnpm → npm → yarn
+  // ① 首选：vendor 已随包分发 → 直接可用，不需要任何网络或包管理器
+  //    （ADR-015：一次 clone → 立刻可用）
+  const vroot = join(REPO, 'vendor', 'node_modules')
+  const vrep = join(REPO, 'vendor', 'VENDOR.json')
+  if (existsSync(vroot) && existsSync(vrep)) {
+    let rep = null
+    try { rep = JSON.parse(readFileSync(vrep, 'utf8')) } catch {}
+    const vmiss = loadManifest().servers.filter(
+      (s) => !existsSync(join(vroot, ...s.package.split('/'), 'package.json')))
+    if (rep && !vmiss.length) {
+      ok(`vendor 已随包分发：${rep.package_count} 包，${(rep.bytes / 1048576).toFixed(1)}M`)
+      if (rep.kept_platforms) say(`    ${C.dim}保留平台：${rep.kept_platforms.join(' ')}${C.rst}`)
+      say(`    ${C.dim}无需 npm install、无需网络，直接进下一步${C.rst}`)
+      return verifyEntries()
+    }
+    if (vmiss.length) {
+      warn(`vendor 不完整（缺 ${vmiss.map((m) => m.id).join(', ')}），回退实时安装`)
+    }
+  }
+
+  // ② 降级：pnpm → npm → yarn（开发态 / vendor 不可用时）
   let pm = null, why = ''
   for (const [name, reason] of [['pnpm', '首选（隔离式依赖布局）'], ['npm', '次选（扁平化，多版本依赖有冲突风险）'], ['yarn', '兜底']]) {
     if (which(name)) { pm = name; why = reason; break }
@@ -552,8 +589,11 @@ function buildJs(opts) {
     return false
   }
   ok('依赖安装完成')
+  return verifyEntries()
+}
 
-  // 校验每个 MCP 的入口是否真的存在
+// 校验 7 个通道入口是否真的可解析（vendor 与实时安装共用）
+function verifyEntries() {
   say('  校验 7 个通道入口…')
   const missing = []
   for (const s of loadManifest().servers) {
@@ -563,6 +603,7 @@ function buildJs(opts) {
   }
   if (missing.length) {
     err(`以下通道入口缺失：${missing.join(', ')}`)
+    say('  修法： node scripts/qingnang.mjs fetch --force   （重装依赖）')
     return false
   }
   ok('全部 7 个通道入口就绪')
@@ -1134,6 +1175,27 @@ function cmdCheck() {
   scanDirs.forEach((d) => walk(join(REPO, d)))
   if (s1bad.length) fail(`  forge 接缝 S1 违约：${s1bad.slice(0, 5).join(', ')}`)
   else ok('forge 接缝 S1：无 DSH/Cordis 专属实现')
+
+  // 4b vendor 完整性（ADR-015：一次 clone 即可离线运行）
+  say('── MCP vendor（离线能力）──')
+  const vroot = join(REPO, 'vendor', 'node_modules')
+  const vrep = join(REPO, 'vendor', 'VENDOR.json')
+  if (!existsSync(vroot) || !existsSync(vrep)) {
+    fail('  vendor 不存在 —— 跑： node scripts/vendor-mcp.mjs')
+  } else {
+    let vrepJson
+    try { vrepJson = JSON.parse(readFileSync(vrep, 'utf8')) } catch { vrepJson = null }
+    if (!vrepJson) fail('  vendor/VENDOR.json 解析失败')
+    else {
+      const miss = []
+      for (const s of loadManifest().servers) {
+        if (!existsSync(join(vroot, ...s.package.split('/'), 'package.json'))) miss.push(s.package)
+      }
+      if (miss.length) fail(`  vendor 缺入口包：${miss.join(', ')}`)
+      else ok(`vendor 完整：${vrepJson.package_count} 包，${(vrepJson.bytes / 1048576).toFixed(1)}M，入口 ${loadManifest().servers.length} 个`)
+      if (vrepJson.kept_platforms) ok(`保留平台：${vrepJson.kept_platforms.join(' ')}`)
+    }
+  }
 
   // 5 隐私
   say('── 隐私隔离 ──')
