@@ -28,8 +28,8 @@
 
 ## 自检
 
-- [ ] `bash scripts/check.sh` 通过
-- [ ] `bash scripts/doctor.sh` 无 `❌`
+- [ ] `node scripts/qingnang.mjs check` 通过
+- [ ] `node scripts/qingnang.mjs doctor` 无 `❌`
 - [ ] `cmp AGENTS.md CLAUDE.md` 通过（若改过治理文档）
 
 ## 备注

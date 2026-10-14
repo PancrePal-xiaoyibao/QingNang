@@ -130,7 +130,7 @@ skills/qingnang/
 
 mcp-servers/
 ├── manifest.json      ← **MCP 唯一事实源**
-└── healthcheck.sh
+└── healthcheck.mjs
 ```
 
 **三层注入为什么必须物理分离**（不许合并成一个大文件）：
@@ -174,4 +174,4 @@ mcp-servers/
 - [ ] 知识卡 frontmatter 有 `source` + `reviewed_by` 吗？
 - [ ] **不含任何真实患者信息**？（`data/synthetic/` 造数）
 - [ ] 许可在白名单内？未清的放 `reserved` 了吗？
-- [ ] 跑过 `bash scripts/check.sh` 吗？
+- [ ] 跑过 `node scripts/qingnang.mjs check` 吗？

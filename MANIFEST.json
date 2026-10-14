@@ -61,7 +61,7 @@
       "python -m venv",
       "conda"
     ],
-    "build_command": "bash scripts/fetch-vendor.sh",
+    "build_command": "node scripts/qingnang.mjs fetch",
     "offline_after_build": true
   },
   "channels": {
@@ -122,7 +122,7 @@
   "host_profile": {
     "path": "skills/qingnang/HOST_PROFILE.md",
     "template": "skills/qingnang/HOST_PROFILE.md.template",
-    "generated_by": "scripts/probe-host.sh",
+    "generated_by": "scripts/qingnang.mjs probe",
     "gitignored": true
   },
   "data": {

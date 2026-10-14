@@ -232,7 +232,7 @@ scope: Phase 1 + Phase 2 可独立验收部分（M1–M6）
 
 | 项 | 内容 |
 |---|---|
-| **决策** | 部署时运行 `scripts/probe-host.sh`（**参照 `dev-host-init` 的 `host-scan.sh`**），探测结果写入 `skills/qingnang/HOST_PROFILE.md`（本机画像），与主注入一起装到宿主 |
+| **决策** | 部署时运行 `scripts/qingnang.mjs probe`（**参照 `dev-host-init` 的 `host-scan.sh`**），探测结果写入 `skills/qingnang/HOST_PROFILE.md`（本机画像），与主注入一起装到宿主 |
 | **探测维度** | OS/架构 ｜ CPU 核心+内存（判断并发能力） ｜ **网络代理（env 变量 + 常见本地端口探测，含 1080/7890/7897/8118/8888）** ｜ npm registry 可达性 ｜ 已装运行时（node/python/npx） ｜ 磁盘可用空间 ｜ 宿主类型（探测到 `.claude`/`.pi`/`.codex` 等目录） |
 | **被否方案** | ① 不探测、让用户手填（零基础用户填不对代理，直接卡在第一步） ② 把探测结果写进 `INJECT.md`（主注入必须 ≤2KB 且**与机器无关**，否则无法入库复用） |
 | **理由** | **代理是青囊的第一道门槛**（`open-websearch` 需代理才能访问部分境外站点）；探测一次写到独立文件，既不污染主注入，又让 Agent 直接知道「本机代理是 127.0.0.1:7890」 |
@@ -313,7 +313,7 @@ scope: Phase 1 + Phase 2 可独立验收部分（M1–M6）
 | **被否方案** | ① 只写一条「快乐路径」（一半用户装不上） ② 在脚本里各写各的降级逻辑（散落、不一致、无法审查） |
 | **理由** | 青囊要装到**用户的机器**上。用户环境千差万别：可能只有 conda 没有 uv、npm 装不上 pnpm、没有代理、Node 版本不够。**只写一条路径 = 一半用户装不上。** |
 | **可逆性** | 高（降级链是文档 + 脚本条件分支，不改变契约） |
-| **后果** | `AGENTS.md` §1 新增六节降级链铁律；`scripts/fetch-vendor.sh` 实现环境三档；所有降级必须**可观察**（明示走了哪一档） |
+| **后果** | `AGENTS.md` §1 新增六节降级链铁律；`scripts/qingnang.mjs fetch` 实现环境三档；所有降级必须**可观察**（明示走了哪一档） |
 
 **五条降级链（全部已实现）**：
 
@@ -377,7 +377,7 @@ scope: Phase 1 + Phase 2 可独立验收部分（M1–M6）
     "knows":         { "credential_required": true, "degrade_to": "pubmed" },
     "get_biji":      { "credential_required": false, "status": "reserved_license_pending" }
   },
-  "host_profile": { "path": "skills/qingnang/HOST_PROFILE.md", "generated_by": "scripts/probe-host.sh" },
+  "host_profile": { "path": "skills/qingnang/HOST_PROFILE.md", "generated_by": "scripts/qingnang.mjs probe" },
   "data": { "public_pack": null, "private_root": "~/.qingnang/private" },
   "privacy": { "telemetry_allowed_values": ["off"], "private_paths_exportable": false }
 }
@@ -567,16 +567,14 @@ package-lock.json                          # 锁定完整依赖树（可复现�
 pyproject.toml                             # Python 侧：Phase 3 承载 PDF 解析 / 本地 RAG（当前依赖为空）
 
 # ── 脚本 ─────────────────────────────────────────────────────
-scripts/lib/common.sh                      # 共用：日志/符号/幂等/upsert（**库文件，不设 set，避免污染调用者**）
-scripts/lib/host-probe.sh                  # 宿主机探测（移植自 dev-host-init，含硬件/代理/构建器/宿主）
-scripts/lib/render-host-profile.py         # HOST_PROFILE.md 渲染（探测值→模板；缺值填兜底文案）
-scripts/lib/make-launch-shims.py           # 生成 MCP 启动垫片（挡住所包管理器目录布局差异）
-scripts/fetch-vendor.sh                    # **环境构建**：JS 首选 pnpm→npm→yarn；Python 首选 uv→venv→conda
-scripts/probe-host.sh                      # 调 host-probe.sh → 渲染 HOST_PROFILE.md（**幂等**）
-scripts/deploy.sh                          # --mode=source|agent [--host=<h>] [--link] [--dry-run] [--uninstall]
-scripts/doctor.sh                          # §4.4 契约（9 项，首项先查宿主画像）
-scripts/check.sh                           # 聚合自检（26 项：脚本/清单/技能层/隐私/敏感闸/治理）
-scripts/phi_scan.py                        # 中文 PHI/PII 正则扫描
+（已合并进 scripts/qingnang.mjs）                      # 共用：日志/符号/幂等/upsert（**库文件，不设 set，避免污染调用者**）
+（已合并进 scripts/qingnang.mjs）                  # 宿主机探测（移植自 dev-host-init，含硬件/代理/构建器/宿主）
+（已合并进 scripts/qingnang.mjs）         # HOST_PROFILE.md 渲染（探测值→模板；缺值填兜底文案）
+（已废弃，见 ADR-014）           # 生成 MCP 启动垫片（挡住所包管理器目录布局差异）
+scripts/qingnang.mjs fetch                    # **环境构建**：JS 首选 pnpm→npm→yarn；Python 首选 uv→venv→conda
+scripts/qingnang.mjs probe                      # 调 host-probe.sh → 渲染 HOST_PROFILE.md（**幂等**）
+scripts/qingnang.mjs                      # **唯一入口**（跨平台）：serve / fetch / deploy / probe / doctor / check / mcp-config
+scripts/phi_scan.mjs                        # 中文 PHI/PII 正则扫描
 
 # ── 技能层（可安装单元，**三个注入文件必须都装**）────────────
 skills/qingnang/INJECT.md                  # ≤2KB：宣告存在 + 指路 + 医学三条红线 + 搜索薄提示
@@ -595,7 +593,7 @@ skills/qingnang/references/pancreas/glossary.md         # 术语中英对照（p
 
 # ── 能力层 ───────────────────────────────────────────────────
 mcp-servers/manifest.json                  # §4.2（**MCP 唯一事实源**）
-mcp-servers/healthcheck.sh                 # 遍历 manifest 做 mcp_initialize 握手（含许可白名单校验）
+mcp-servers/healthcheck.mjs                 # 遍历 manifest 做 mcp_initialize 握手（含许可白名单校验）
 mcp-servers/launch/                        # 🔨 启动垫片（make-launch-shims.py 生成，不入库）
 
 # ── 数据与任务 ───────────────────────────────────────────────
@@ -620,7 +618,7 @@ tasks/CHG-20261014-qingnang-mvp/TRACEABILITY.md   # 追溯与证据
 | 网络请求仅携带检索关键词 | 契约审查（无自动化断言；由 SPEC §5 评审项覆盖） |
 | 导出/分享不得触碰 `private/` | `MANIFEST.json.privacy.private_paths_exportable = false` + `check.sh` 断言 |
 | `HOST_PROFILE.md`（含本机代理/硬件）不得入库 | `git status --porcelain` 在其存在时仍为空；`check.sh` 断言其在 `.gitignore` 中（A33） |
-| `HOST_PROFILE.md` 不得含真实凭据值 | `phi_scan.py` 扫到 `*_API_KEY=` 后跟非空值即失败（A34） |
+| `HOST_PROFILE.md` 不得含真实凭据值 | `phi_scan.mjs` 扫到 `*_API_KEY=` 后跟非空值即失败（A34） |
 
 ### 4.7 `README.md` 「一键部署」段落（**冻结契约**，主人 K6 首要交付物）
 
@@ -632,7 +630,7 @@ tasks/CHG-20261014-qingnang-mvp/TRACEABILITY.md   # 追溯与证据
 | 必须含**开源地址链接**（`https://github.com/PancrePal-xiaoyibao/QingNang`） | 文本包含该 URL（A20） |
 | 指令块必须是**可逐字复制执行**的（不含占位符说明文字，除可选凭据行） | 把指令块抽取到临时文件后 `bash` 执行，干净环境一次 `exit 0`（A20） |
 | 必须写清「**部署规范引导**」：先做什么、后做什么、卡住看哪里 | 段落含编号步骤 + 一步一个编号（对齐 `AGENTS.md` 说人话规则 R2） |
-| 必须写清**凭据非必需**（K3） | 含「不填任何 Key 也能用」的明确表述 + 指向 `bash scripts/doctor.sh` |
+| 必须写清**凭据非必需**（K3） | 含「不填任何 Key 也能用」的明确表述 + 指向 `node scripts/qingnang.mjs doctor` |
 | 必须含**医学伦理与免责**首屏声明（K5） | 含三句：不构成医疗建议 / 数据只留本机 / 社区只做技术分发不担诊疗责任 |
 
 **README 骨架（顺序即优先级，冻结）**：
@@ -658,9 +656,9 @@ tasks/CHG-20261014-qingnang-mvp/TRACEABILITY.md   # 追溯与证据
 请把青囊（QingNang）医学能力包装到当前环境：
 
 1. `git clone https://github.com/PancrePal-xiaoyibao/QingNang.git && cd QingNang`
-2. `bash scripts/deploy.sh --mode=source`   # 装依赖 + 拉取 MCP + 建本地索引（幂等，可重复跑）
-3. `bash scripts/deploy.sh --mode=agent`    # 把能力装到你自己（宿主）
-4. `bash scripts/doctor.sh`                 # 逐通道体检，把结果贴回来
+2. `node scripts/qingnang.mjs deploy --mode=source`   # 装依赖 + 拉取 MCP + 建本地索引（幂等，可重复跑）
+3. `node scripts/qingnang.mjs deploy --mode=agent`    # 把能力装到你自己（宿主）
+4. `node scripts/qingnang.mjs doctor`                 # 逐通道体检，把结果贴回来
 
 不用填任何 API Key 也能用：文献检索与临床试验检索是免费通道。
 遇到报错按脚本给的中文提示处理，不要跳过任何一步。
@@ -807,7 +805,7 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 ├── .venv/                ← 🔨 Python 环境（项目活动区）→ .gitignore
 └── mcp-servers/
     ├── manifest.json     ← **唯一事实源**：5 通道 + 2 reserved，含许可/版本/凭据/降级/代理
-    ├── healthcheck.sh    ← 遍历 manifest 做 mcp_initialize 握手（含许可白名单校验）
+    ├── healthcheck.mjs   ← 遍历 manifest 做 mcp_initialize 握手（含许可白名单校验）
     └── launch/           ← 🔨 启动垫片（每通道一个）→ .gitignore
 ```
 
@@ -816,7 +814,7 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 | # | 条款 | 理由 |
 |---|---|---|
 | **E1** | 依赖**只声明在** `package.json` / `pyproject.toml`，**版本钉死**（不许 `^` / `~`） | MCP 行为变化直接影响医疗信息检索结果，不可接受漂移 |
-| **E2** | 环境构建**只通过** `scripts/fetch-vendor.sh`（幂等，`--force` 重建） | 单一入口，降级链只有一处实现，可审查 |
+| **E2** | 环境构建**只通过** `scripts/qingnang.mjs fetch`（幂等，`--force` 重建） | 单一入口，降级链只有一处实现，可审查 |
 | **E3** | `manifest.json` 的 `command` **指向本地垫片**（`mcp-servers/launch/<id>`），**不直接 `npx`** | ① **完全离线启动**（不再联网拉包）② 与 pnpm/npm 目录布局解耦 ③ 垫片知道该加什么预设参数（如 `serve`） |
 | **E4** | 垫片由 `make-launch-shims.py` **生成**，不入库 | 它依赖实际安装位置，是构建产物 |
 | **E5** | `engines.node >= 22.13.0`，在**前置检查**中拦截 | `unified-trial-mcp` 的硬要求；不满足时给中文升级指引，而非让用户在半途失败 |
@@ -842,7 +840,7 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 | 实际安装后 | **127MB**（含完整依赖树） |
 | 握手结果 | **5/5 通过**（离线垫片模式） |
 
-> **验收**：**A40** `git ls-files` 不含 `node_modules/` / `.venv/` / `mcp-servers/launch/`；**A41** 删掉 `node_modules/` 后重跑 `fetch-vendor.sh` 能恢复；**A42** 构建完成后**断网**仍能通过 `healthcheck.sh`（离线可启动）。
+> **验收**：**A40** `git ls-files` 不含 `node_modules/` / `.venv/` / `mcp-servers/launch/`；**A41** 删掉 `node_modules/` 后重跑 `qingnang.mjs fetch` 能恢复；**A42** 构建完成后**断网**仍能通过 `healthcheck.mjs`（离线可启动）。
 
 ---
 
@@ -855,7 +853,7 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 | 依赖 | 无 |
 | 产出 | §4.5 中「治理与元数据」全部文件 |
 | 验收 | **A1** `git ls-files \| sort` 与 §4.5 白名单逐条比对一致（无清单外文件）<br>**A2** 隔离断言：`touch private/probe.txt` 与 `~/.qingnang/private/probe.txt` 后 `git status --porcelain` 输出为空<br>**A3** `MANIFEST.json` 可被 6 个断言校验（schema_version / pack / 三个 channels / privacy） |
-| 检查命令 | `bash scripts/check.sh --only=manifest,whitelist,isolation` |
+| 检查命令 | `node scripts/qingnang.mjs check --only=manifest,whitelist,isolation` |
 | 风险 | 白名单过严会拖慢开发 → 允许提 SPEC 修订，**不允许静默越界** |
 | 回滚 | 全部为新增文件，`git revert` 或删除即回到空仓库态 |
 
@@ -864,9 +862,9 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 | 项 | 内容 |
 |---|---|
 | 依赖 | M1 |
-| 产出 | `scripts/lib/common.sh`、`scripts/lib/host-probe.sh`、`scripts/probe-host.sh`、`scripts/deploy.sh`（`--mode=source\|agent`、`--host=<h>`、`--link`、`--dry-run`、`--uninstall`）、`scripts/doctor.sh`、`mcp-servers/healthcheck.sh` |
+| 产出 | `scripts/qingnang.mjs`、`scripts/qingnang.mjs`（`serve`/`fetch`/`deploy`/`probe`/`doctor`/`check`/`mcp-config`）、`scripts/phi_scan.mjs`、`mcp-servers/healthcheck.mjs` |
 | 验收 | **A4** 幂等：`deploy.sh --mode=source` 连跑两次均 `exit 0`，第二次不改变已装产物（对安装目录取 hash 比对）<br>**A5** `doctor.sh` 退出码契约：无凭据档 `exit 0`；人为破坏一个 MCP `command` 后 `exit 1` 且输出中文修复指引<br>**A6** `deploy.sh --mode=agent --host=<h>` 在 **至少 2 个 A 类宿主**安装成功；ADR-004 表回填实测结论<br>**A18** `QINGNANG_TELEMETRY=on` 时 `deploy.sh` 拒绝启动且 `doctor.sh` 报 `❌`<br>**A19** `~/.qingnang/private` 权限为 `0700`<br>**A20** README「一键部署」契约（§4.7）：段落位置 < 前 1/3、含仓库 URL、指令块抽取后干净环境一次 `exit 0`、含免责三句<br>**A21** `deploy.sh --dry-run`：**不写任何文件、不读真实凭据值**，仅校验「配置装载 → 通道发现 → 路由选择」，`exit 0`（K3）<br>**A22** `--mode=agent --host=<h>` 写入为**幂等 upsert**（连跑两次不产生重复条目），`--uninstall` 只删自己的条目<br>**A27** `probe-host.sh` **幂等且失败安全**：连跑两次 `exit 0`；字段缺失时 `HOST_PROFILE.md` 填「未检测到」兜底文案，**不留裸 `{{}}`**<br>**A28** `deploy.sh --mode=agent` **必装三个注入文件**（`INJECT.md` / `SEARCH_RUNTIME.md` / `HOST_PROFILE.md`），缺任一即 `exit 1`
-| 检查命令 | `bash scripts/check.sh --only=deploy,doctor` + `bash -n` 全脚本 + `tests/acceptance/test_deploy.py` |
+| 检查命令 | `node scripts/qingnang.mjs check --only=deploy,doctor` + `bash -n` 全脚本 + `tests/acceptance/test_deploy.py` |
 | 风险 | R8（跨宿主路径矩阵未定义）→ 由 ADR-004 限为 **A 类宿主**（有 `skills/` 惯例）+ marker 幂等策略兜<br>R18（`open-websearch` 可能需 Chromium）→ `doctor.sh` 显式提示 + 提供「仅 request 模式」降级路径 |
 | 回滚 | `deploy.sh` 需支持 `--uninstall`（幂等副作用的最小回退）；脚本本身删除即回滚 |
 
@@ -877,7 +875,7 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 | 依赖 | M1 |
 | 产出 | `skills/qingnang/INJECT.md`、`SEARCH_RUNTIME.md`、`SKILL.md`、`MERGE_CONTRACT.md`、`HOST_PROFILE.md.template`、`references/ethics/*.md`、`references/pancreas/*.md` |
 | 验收 | **A7** 体积：`INJECT.md` ≤2048B、`SEARCH_RUNTIME.md` ≤8192B、`SKILL.md` ≤14336B（字节数断言）<br>**A8** `INJECT.md` 含三条医学红线关键词（不做诊断 / 不给用药建议 / 隐私不出机）<br>**A9** 每张知识卡 frontmatter 含 `source` + `reviewed_by`（无审校时显式 `pending-review`）+ 正文声明「未经医学审校」<br>**A24** `INJECT.md` **含搜索引导语但不含具体工具清单**（断言：出现 `SEARCH_RUNTIME` 字样，且**不出现** `open-websearch` / `bing-cn-mcp` 等包名）<br>**A25** `SEARCH_RUNTIME.md` 含六条通道（§3.5 分流表）且每条注明「哪个 skill 用它、解决什么」<br>**A26** `SKILL.md` 含「涉搜索先读 `SEARCH_RUNTIME.md`」引导语<br>**A29** `README.md` / `AGENTS.md` / `CLAUDE.md` / `MERGE_CONTRACT.md` **均含四要素**（项目定位 / 开发逻辑 / 目的 / 实现效果）<br>**A31** 每个 skill 的 `SKILL.md` 声明了「依赖哪些 MCP / 何时调 / 结果怎么用」三件事 |
-| 检查命令 | `bash scripts/check.sh --only=skill`（含体积 + frontmatter schema 校验） |
+| 检查命令 | `node scripts/qingnang.mjs check --only=skill`（含体积 + frontmatter schema 校验） |
 | 风险 | 知识卡内容质量（医疗责）→ 只做「要点摘录 + 来源链接」，**不做原创医学结论**；严格遵循母文档 §6.2 的 NCCN 处置 |
 | 回滚 | 新增文件，删除即回滚 |
 
@@ -886,9 +884,9 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 | 项 | 内容 |
 |---|---|
 | 依赖 | M1、M2 |
-| 产出 | `mcp-servers/manifest.json`（§4.2）、`mcp-servers/healthcheck.sh` |
-| 验收 | **A10** manifest 中每个 server 的 `version` 与 `npm view <pkg> version` 一致<br>**A11** `healthcheck.sh` 对每个 server 完成 MCP `initialize` 握手并打印 server info（超时视为失败）<br>**A12** 每个 server 的 `license ∈ license_whitelist`（`MIT` / `Apache-2.0` / `ISC` / `BSD-3-Clause`）<br>**A30** 每个 server 在 `SEARCH_RUNTIME.md` 或至少一个 skill 中有**双向引用**<br>**A32** 若 H5 成立（`open-websearch` 必须 Chromium），则 `doctor.sh` 在「仅 request 模式」下仍全绿 |
-| 检查命令 | `bash scripts/check.sh --only=mcp && bash mcp-servers/healthcheck.sh` |
+| 产出 | `mcp-servers/manifest.json`（§4.2）、`mcp-servers/healthcheck.mjs` |
+| 验收 | **A10** manifest 中每个 server 的 `version` 与 `npm view <pkg> version` 一致<br>**A11** `healthcheck.mjs` 对每个 server 完成 MCP `initialize` 握手并打印 server info（超时视为失败）<br>**A12** 每个 server 的 `license ∈ license_whitelist`（`MIT` / `Apache-2.0` / `ISC` / `BSD-3-Clause`）<br>**A30** 每个 server 在 `SEARCH_RUNTIME.md` 或至少一个 skill 中有**双向引用**<br>**A32** 若 H5 成立（`open-websearch` 必须 Chromium），则 `qingnang.mjs doctor` 在「仅 request 模式」下仍全绿 |
+| 检查命令 | `node scripts/qingnang.mjs check --only=mcp && node mcp-servers/healthcheck.mjs` |
 | 风险 | H1（无凭据能否握手/返回）→ 某条通道不可用时**逐一登记**并写明降级到哪条，**不得静默放宽**<br>H5（`open-websearch` 是否必须 Chromium）→ 若必须，登记 R18 并在 `doctor.sh` 给「仅 request 模式」降级提示 |
 | 回滚 | 从 manifest `servers` 移除条目 |
 
@@ -899,7 +897,7 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 | 依赖 | M3、M4 |
 | 产出 | `SKILL.md` 路由表 + 降级链章节（本文档 §3.5 的可执行化） |
 | 验收 | **A13** `SKILL.md` 含降级链与「绝不编造未检索到的内容」条款（关键词断言）<br>**A23** **六类问题的通道选择一致性**（ADR-010 的 E2）：对「一般搜索 / 中文搜索 / 文献 / 试验 / 高级证据 / 病友经验」各跑一次，**实际选择的通道与 §3.5 分流表一致**；偏差即失败<br>**A14** 无凭据端到端：一次 PubMed 检索返回 ≥1 条结果且含 PMID、标题、链接<br>**A15** 无凭据端到端：一次试验检索（unified-trial）返回 ≥1 条结果且含登记号<br>**A15b** 路由 dryrun（K3）：**无凭据** → 证据类问题自动降 PubMed，且**可观察到降级事实**（输出中明示走了哪条通道），不报错、不静默；**若提供真实 `KNOWS_API_KEY`** 则追加断言「路由命中 KnowS」。凭据不可得时本项记 `⚠️` 并写明原因（**不得记为 ✅**） |
-| 检查命令 | `bash scripts/check.sh --only=route`（A13）；A14/A15/A15b 走 `tests/acceptance/` 端到端脚本 |
+| 检查命令 | `node scripts/qingnang.mjs check --only=route`（A13）；A14/A15/A15b 走 `tests/acceptance/` 端到端脚本 |
 | 风险 | 端到端测试依赖外网与上游服务可用性 → 断言允许「网络不可达」时记 `⚠️` 而非失败，但**必须在证据文件写明** |
 | 回滚 | 路由表回退为「仅 PubMed」单通道 |
 
@@ -908,9 +906,9 @@ DSH 内核的 `StdioConfig` 接口（`packages/mcp/mcp-client/src/index.ts:50-73
 | 项 | 内容 |
 |---|---|
 | 依赖 | M1 |
-| 产出 | `.pre-commit-config.yaml`、`.gitleaks.toml`、`scripts/phi_scan.py`、`.github/PULL_REQUEST_TEMPLATE.md` |
-| 验收 | **A16** 正向：放入含假身份证号/手机号/住院号的 fixture → `pre-commit run --all-files` **必须失败**；负向：干净仓库 → 通过<br>**A17** 放入假 API Key fixture → gitleaks 命中（`pre-commit` 自动拉取 gitleaks 二进制，本机当前未安装，属预期）<br>**A33** `HOST_PROFILE.md` 在 `.gitignore` 中且不入库（与 §4.6 对应）<br>**A34** `HOST_PROFILE.md` **不含真实凭据值**（`phi_scan.py` 扫到 `*_API_KEY=` 后跟非空值即失败） |
-| 检查命令 | `bash scripts/check.sh --only=guard` |
+| 产出 | `.pre-commit-config.yaml`、`.gitleaks.toml`、`scripts/phi_scan.mjs`、`.github/PULL_REQUEST_TEMPLATE.md` |
+| 验收 | **A16** 正向：放入含假身份证号/手机号/住院号的 fixture → `pre-commit run --all-files` **必须失败**；负向：干净仓库 → 通过<br>**A17** 放入假 API Key fixture → gitleaks 命中（`pre-commit` 自动拉取 gitleaks 二进制，本机当前未安装，属预期）<br>**A33** `HOST_PROFILE.md` 在 `.gitignore` 中且不入库（与 §4.6 对应）<br>**A34** `HOST_PROFILE.md` **不含真实凭据值**（`phi_scan.mjs` 扫到 `*_API_KEY=` 后跟非空值即失败） |
+| 检查命令 | `node scripts/qingnang.mjs check --only=guard` |
 | 风险 | 规则误报影响贡献意愿 → 规则集需附「为什么这算敏感 + 怎么改」的中文提示；允许 `# phi-scan: ignore` 行级豁免（须在 PR 说明理由） |
 | 回滚 | 移除 `.pre-commit-config.yaml`（CI 闸与 AI 复审属 Phase 4，不在本 CHG） |
 

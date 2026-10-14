@@ -1,5 +1,5 @@
 # 青囊 · gitleaks 规则（敏感信息闸第二层：凭据扫描）
-# 与 scripts/phi_scan.py 分工：gitleaks 管通用凭据，phi_scan 管中文医疗 PHI
+# 与 scripts/phi_scan.mjs 分工：gitleaks 管通用凭据，phi_scan 管中文医疗 PHI
 title = "青囊 QingNang gitleaks config"
 [extend]
 useDefault = true

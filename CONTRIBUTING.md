@@ -35,7 +35,7 @@
 
 | 闸 | 时机 | 检查 |
 |---|---|---|
-| **1. pre-commit** | 你本地提交前 | `gitleaks`（凭据）+ `scripts/phi_scan.py`（中文 PHI/PII）+ 清单/体积/隐私自检 |
+| **1. pre-commit** | 你本地提交前 | `gitleaks`（凭据）+ `scripts/phi_scan.mjs`（中文 PHI/PII）+ 清单/体积/隐私自检 |
 | **2. CI** | PR 推送后 | 同套规则跑全量 diff；命中即红 |
 | **3. AI 复审** | PR 触发 | 专查「看似脱敏实可反推」的组合；结论挂 label，人工复核 |
 
@@ -110,8 +110,8 @@ updated_at: YYYY-MM-DD
 ### 5.1 提交前自检
 
 ```bash
-bash scripts/check.sh          # 26 项自检（清单 / 体积 / 隐私 / 治理一致性）
-bash scripts/doctor.sh         # 逐通道体检，应无 ❌
+node scripts/qingnang.mjs check          # 26 项自检（清单 / 体积 / 隐私 / 治理一致性）
+node scripts/qingnang.mjs doctor         # 逐通道体检，应无 ❌
 cmp AGENTS.md CLAUDE.md        # 若改过治理文档，两个必须逐字一致
 ```
 
@@ -147,7 +147,7 @@ PR 模板会自动带上，逐项勾选：
 - [ ] 新增 MCP 许可在白名单内且钉死版本
 - [ ] 通过合并契约的准入四条
 - [ ] 耦合三件事齐备 + `SEARCH_RUNTIME.md` 双向引用已更新
-- [ ] `bash scripts/check.sh` 通过
+- [ ] `node scripts/qingnang.mjs check` 通过
 
 ---
 

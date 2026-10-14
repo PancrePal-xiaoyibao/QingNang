@@ -143,6 +143,6 @@
 | 项 | 检查方式 |
 |---|---|
 | 三个注入文件是否齐备 | `INJECT.md` / `SEARCH_RUNTIME.md` / `HOST_PROFILE.md` |
-| 通道是否健康 | `bash scripts/doctor.sh` |
+| 通道是否健康 | `node scripts/qingnang.mjs doctor` |
 | 本机代理 | 读 `HOST_PROFILE.md` 的「网络 / 代理」一节（**搜索失败先看这里**） |
 | 凭据配置 | `.env`（只提交 `.env.example`） |

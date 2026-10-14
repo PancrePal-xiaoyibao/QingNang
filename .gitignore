@@ -12,11 +12,10 @@ skills/qingnang/HOST_PROFILE.md
 *.pem
 !**/*.key.example
 
-# ── 构建产物（由 scripts/fetch-vendor.sh 生成，不入库）──────────
+# ── 构建产物（由 node scripts/qingnang.mjs fetch 生成，不入库）────
 node_modules/
 .venv/
 .venv
-mcp-servers/launch/
 
 # ── 运行时与缓存 ──────────────────────────────────────────────
 __pycache__/

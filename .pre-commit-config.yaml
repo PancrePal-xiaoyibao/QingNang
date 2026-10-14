@@ -12,14 +12,14 @@ repos:
     hooks:
       - id: phi-scan
         name: phi-scan（中文医疗 PHI/PII 扫描）
-        entry: python3 scripts/phi_scan.py --staged
+        entry: node scripts/phi_scan.mjs --staged
         language: system
         pass_filenames: false
         always_run: true
 
       - id: qingnang-check
         name: qingnang-check（清单/体积/隐私/治理一致性）
-        entry: bash scripts/check.sh --only=manifest,skill,isolation,whitelist
+        entry: node scripts/qingnang.mjs check --only=manifest,skill,isolation,whitelist
         language: system
         pass_filenames: false
         always_run: true

@@ -315,7 +315,7 @@ QINGNANG_*                  # 环境变量前缀
 2. **哪些 MCP 填了才能用**：仅 KnowS（1 个）。
 3. **哪些 MCP 不填也能用**：PubMed、unified-trial、本地知识库、get-biji（P1 起）——零凭据完整可用。
 4. **怎么申请**：README「凭据申请」章节逐项给出申请入口、截图、预计等待时间（KnowS 走公众号/小程序试用额度）。
-5. **填完怎么生效**：`bash scripts/doctor.sh` 一键体检，逐通道打 ✅/⬜/❌ 并给出修复提示。
+5. **填完怎么生效**：`node scripts/qingnang.mjs doctor` 一键体检，逐通道打 ✓/⬜/❌ 并给出修复提示。
 
 ### 7.3 降级链（路由层写死在 SKILL.md 铁律里）
 
@@ -335,9 +335,10 @@ QINGNANG_*                  # 环境变量前缀
 ```text
 请把青囊（QingNang）医学能力包部署到当前环境：
 1) git clone https://github.com/PancrePal-xiaoyibao/qingnang.git && cd qingnang
-2) bash scripts/deploy.sh --mode=source   # 装依赖 + 拉取 MCP + 建本地索引（幂等可重跑）
-3) bash scripts/deploy.sh --mode=agent    # 把注入层+技能层安装到你自己的技能目录
-4) bash scripts/doctor.sh                 # 逐通道体检，把结果贴回来
+2) node scripts/qingnang.mjs fetch                 # 在本项目内构建依赖环境（含 7 个 MCP）
+3) node scripts/qingnang.mjs deploy --mode=source  # 探测本机 + 建私有目录
+4) node scripts/qingnang.mjs deploy --mode=agent   # 把注入层+技能层装到你自己（宿主）
+5) node scripts/qingnang.mjs doctor                # 逐通道体检，把结果贴回来
 环境变量只影响增强通道：先跑 doctor，缺什么它会用中文告诉你去 README 哪一节申请。
 遇到报错按提示处理，不要跳过任何一步。
 ```

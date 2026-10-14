@@ -1,8 +1,8 @@
 # 青囊 · 本机画像（HOST_PROFILE）
 
-> **本文件由 `scripts/probe-host.sh` 在部署时自动生成。**
+> **本文件由 `scripts/qingnang.mjs probe` 在部署时自动生成。**
 > 它是**机器相关**的，已在 `.gitignore` 中，**不会进仓库**。
-> 重新生成：`bash scripts/probe-host.sh`
+> 重新生成：`node scripts/qingnang.mjs probe`
 
 **探测时间**：{{PROBED_AT}}
 

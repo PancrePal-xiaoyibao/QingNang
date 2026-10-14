@@ -9,6 +9,41 @@
 
 ---
 
+## 🎯 这是什么，为谁而做
+
+**青囊不是「给人用的软件」，是「给 AI Agent 用的能力包」。**
+
+| 谁 | 怎么用青囊 |
+|---|---|
+| **你的 AI Agent** | 读青囊的注入文档，就知道该怎么查文献、找试验、看指南 |
+| **你（病友或家属）** | 你只要对 Agent 说话。它自己会选对工具 |
+| **未来的桌面客户端**（DeepSeek Harness Desktop） | 通过预留接口接入，让桌面版自带医学能力 |
+| **社区贡献者** | 按合并契约往里加知识卡或新能力 |
+
+**你不需要懂任何技术。** 复制一段部署指令给你的 Agent 就行。
+
+---
+
+## 📐 十条设计原则
+
+| # | 原则 | 对你意味着什么 |
+|---|---|---|
+| 1 | **为 Agent 而做** | 那些文件是给 Agent 读的，所以你不用配置任何东西 |
+| 2 | **薄注入 + 厚参考** | Agent 的「记忆占用」小，响应更快 |
+| 3 | **零凭据可跑** | **不用申请任何 Key 就能用** |
+| 4 | **全链降级** | 一条路不通自动换下一条，不会卡死 |
+| 5 | **合并而非搜集** | 只装医学真正用得上的，不塞一堆没用的 |
+| 6 | **耦合而非并列** | 工具之间知道彼此存在，不会各干各的 |
+| 7 | **医学红线优先** | **宁可查不到，也不给你诊断或剂量** |
+| 8 | **数据不出机** | 你的资料永远只在你电脑上 |
+| 9 | **跨平台** | Windows / macOS / Linux 都能装，**不用 WSL** |
+| 10 | **失败可观察** | 用不了会明确告诉你，**不会编造** |
+
+> 原则冲突时的裁决顺序：**伦理与隐私 > 可用性 > 其余**。
+> 完整版见 `AGENTS.md` §0.4。
+
+---
+
 ## ⚠️ 医学伦理与免责声明（请先读完这段）
 
 1. **本工具不构成医疗建议。** 青囊只做信息检索与整理，不做诊断、不给用药剂量、不替代医生。
@@ -48,10 +83,10 @@
 
 按顺序执行，不要跳步：
 1. git clone https://github.com/PancrePal-xiaoyibao/QingNang.git && cd QingNang
-2. bash scripts/fetch-vendor.sh            # 在本项目内构建全部依赖环境（含 7 个 MCP）
-3. bash scripts/deploy.sh --mode=source    # 探测本机（硬件/网络/代理）+ 建私有目录
-4. bash scripts/deploy.sh --mode=agent     # 把技能层装到你自己（--host= 可指定宿主）
-5. bash scripts/doctor.sh                  # 逐通道体检，把结果贴回来
+2. node scripts/qingnang.mjs fetch            # 在本项目内构建全部依赖环境（含 7 个 MCP）
+3. node scripts/qingnang.mjs deploy --mode=source    # 探测本机（硬件/网络/代理）+ 建私有目录
+4. node scripts/qingnang.mjs deploy --mode=agent     # 把技能层装到你自己（--host= 可指定宿主）
+5. node scripts/qingnang.mjs doctor                  # 逐通道体检，把结果贴回来
 
 说明：
 - 不需要填任何 API Key。五条通道零凭据可用。
@@ -76,16 +111,16 @@ git clone https://github.com/PancrePal-xiaoyibao/QingNang.git
 cd QingNang
 
 # 2. 构建依赖环境（首次约 5–10 分钟）
-bash scripts/fetch-vendor.sh
+node scripts/qingnang.mjs fetch
 
 # 3. 探测本机 + 建私有目录
-bash scripts/deploy.sh --mode=source
+node scripts/qingnang.mjs deploy --mode=source
 
 # 4. 装技能层到你的 Agent
-bash scripts/deploy.sh --mode=agent
+node scripts/qingnang.mjs deploy --mode=agent
 
 # 5. 体检
-bash scripts/doctor.sh
+node scripts/qingnang.mjs doctor
 ```
 
 #### Windows + WSL2（推荐）
@@ -121,8 +156,8 @@ bash scripts/doctor.sh
 **指定宿主**（不指定则自动探测）：
 
 ```bash
-bash scripts/deploy.sh --mode=agent --host=claude     # 或 pi / openclaw / codex
-bash scripts/deploy.sh --mode=agent --link            # 用软链（源改了宿主副本自动跟随）
+node scripts/qingnang.mjs deploy --mode=agent --host=claude     # 或 pi / openclaw / codex
+node scripts/qingnang.mjs deploy --mode=agent --link            # 用软链（源改了宿主副本自动跟随）
 ```
 
 #### MCP 通道配置
@@ -154,7 +189,7 @@ for s in d['servers']:
 ```bash
 cp .env.example .env
 # 编辑 .env，取消对应行注释并填值（大多数情况不用填）
-bash scripts/doctor.sh     # 体检，逐项显示 ✓ 已配 / ⬜ 选填未配 / ❌ 出错
+node scripts/qingnang.mjs doctor     # 体检，逐项显示 ✓ 已配 / ⬜ 选填未配 / ❌ 出错
 ```
 
 | 变量 | 用途 | 不填的后果 |
@@ -291,7 +326,7 @@ manifest 的 `args` 字段声明，垫片自动带上。
 有的通道需要凭据（KnowS / get-biji）。**本包的设计是：缺凭据不是错误。**
 
 ```bash
-$ bash mcp-servers/healthcheck.sh
+$ node mcp-servers/healthcheck.mjs
   ✓ web_search
   ✓ bing_cn
   ✓ pubmed
@@ -323,11 +358,11 @@ $ bash mcp-servers/healthcheck.sh
 
 | 闸 | 时机 | 查什么 |
 |---|---|---|
-| **pre-commit** | 本地提交前 | gitleaks（凭据）+ `phi_scan.py`（中文 PHI/PII） |
+| **pre-commit** | 本地提交前 | gitleaks（凭据）+ `phi_scan.mjs`（中文 PHI/PII） |
 | **CI** | PR 推送后 | 同套规则跑全量 diff |
 | **AI 复审** | PR 触发 | 查「看似脱敏实可反推」的组合 |
 
-`phi_scan.py` 覆盖：身份证号、手机号、住院号/门诊号、**姓名+诊断组合**、
+`phi_scan.mjs` 覆盖：身份证号、手机号、住院号/门诊号、**姓名+诊断组合**、
 **时间+就诊+机构三件套**、报告单图片 EXIF、API Key、私钥、银行卡号。
 
 **做正负向测试**：真实形态命中，描述性文字不误报。
@@ -366,7 +401,7 @@ $ bash mcp-servers/healthcheck.sh
 ```bash
 cp .env.example .env
 # 编辑 .env
-bash scripts/doctor.sh
+node scripts/qingnang.mjs doctor
 ```
 
 ---
@@ -466,7 +501,7 @@ QingNang/
 │
 ├── mcp-servers/
 │   ├── manifest.json          ← **MCP 唯一事实源**
-│   ├── healthcheck.sh         ← 逐通道握手 + 许可白名单校验
+│   ├── healthcheck.mjs        ← 逐通道握手 + 许可白名单校验
 │   └── launch/                ← 启动垫片（生成，不入库）
 │
 ├── scripts/
@@ -475,7 +510,7 @@ QingNang/
 │   ├── doctor.sh              ← 九项体检
 │   ├── probe-host.sh          ← 宿主机探测
 │   ├── check.sh               ← 聚合自检（26 项）
-│   ├── phi_scan.py            ← 中文 PHI/PII 扫描
+│   ├── phi_scan.mjs           ← 中文 PHI/PII 扫描
 │   └── lib/                   ← common / host-probe / render / make-shims
 │
 ├── data/synthetic/            ← 演示数据（仓库内禁真实数据）
@@ -502,15 +537,15 @@ QingNang/
 | 某个通道 `❌` | 通道不可用 | `doctor.sh` 会给中文修复指引 |
 | `⬜` 是什么意思 | 选填项未配 | **不是错误，不影响使用** |
 | 报 bash 语法错 | Windows 用了 PowerShell/CMD | 改用 **Git Bash 或 WSL** |
-| Agent 不知道有青囊 | 注入没装到位 | 重跑 `bash scripts/deploy.sh --mode=agent` |
+| Agent 不知道有青囊 | 注入没装到位 | 重跑 `node scripts/qingnang.mjs deploy --mode=agent` |
 | Windows 路径报错 | Git Bash 路径语义 | 用 `/c/Users/...` 而非 `C:\Users\...`，或改用 WSL |
 
 **开发者自检**：
 
 ```bash
-bash scripts/check.sh            # 26 项聚合自检
-bash scripts/deploy.sh --mode=source --dry-run   # 只验证链路，不写文件
-bash scripts/doctor.sh           # 九项体检
+node scripts/qingnang.mjs check            # 26 项聚合自检
+node scripts/qingnang.mjs deploy --mode=source --dry-run   # 只验证链路，不写文件
+node scripts/qingnang.mjs doctor           # 九项体检
 bash -n scripts/*.sh             # 脚本语法
 cmp AGENTS.md CLAUDE.md          # 治理文档一致性
 ```

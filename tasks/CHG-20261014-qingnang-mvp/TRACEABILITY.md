@@ -55,11 +55,11 @@
 | **R41** | **主人要求**「把你开发宿主机上 `/ai-spec init` 的规范放进青囊的用户部署阶段参考；**对用户宿主机硬件/网络做探测后写进 agent 注入文档**」 | **ADR-008** / §4.5 | M2 | ⬜ | **A27**（探测幂等+兜底）+ **A28**（三个注入文件必装）+ A33/A34 |
 | **R42** | **主人要求**「**动脑子原则这种保留**；**codebase 那套硬门控去掉**（做医学的，不用这个）；其余原则按同一精神跟进」 | **ADR-009** | M3 | ⬜ | A29 + J9（人工确认医学五条加强项在位、codebase 门控已移除） |
 | **R43** | **主人要求**「设计哲学和原则要在 **README、AGENTS.md、CLAUDE.md** 写清楚：**项目定位、开发逻辑、目的、最重要实现的效果**」 | **§4.10** | M1 | ⬜ | **A29**（四文件四要素）+ J9 |
-| **R45** | **主人要求**「认可的 skill+mcp 直接 pull 下来放进项目内部，部署时只需 pull 后在本项目工作区构建环境」 | SPEC §4.11 / `package.json` + `pyproject.toml` + `scripts/fetch-vendor.sh` | M1,M2 | ✅ **已实现** | 实测：5 个 MCP 装进 `node_modules/`（127MB），垫片离线握手 5/5 通过 |
+| **R45** | **主人要求**「认可的 skill+mcp 直接 pull 下来放进项目内部，部署时只需 pull 后在本项目工作区构建环境」 | SPEC §4.11 / `package.json` + `pyproject.toml` + `scripts/qingnang.mjs fetch` | M1,M2 | ✅ **已实现** | 实测：5 个 MCP 装进 `node_modules/`（127MB），垫片离线握手 5/5 通过 |
 | **R46** | **主人要求**「环境部署也要有 fallback：能装 uv 就先用 uv，没有就直接 python venv」 | **ADR-013** / AGENTS.md §1.2 | M2 | ✅ **已实现** | `fetch-vendor.sh` JS 三档 + Python 三档；本机实测走 npm（pnpm 因 corepack 签名失败）+ uv |
 | **R47** | **主人要求**「fallback 思想要贯穿环境配置、skill、mcp 调用，写进 AGENTS.md / CLAUDE.md」 | AGENTS.md §1（降级链铁律六节） | M1 | ✅ **已实现** | AGENTS.md ≡ CLAUDE.md；`check.sh` 断言一致 |
 | **R48** | **本轮实测发现**：`unified-trial-mcp` 不带子命令时只打印帮助，**必须 `serve`** 才启动 MCP 服务 | `mcp-servers/manifest.json` 的 `args` 字段 | M4 | ✅ 已修 | 垫片实测握手成功（serverInfo: unified-trial-mcp 0.1.0） |
-| **R49** | **本轮实测发现**：`scripts/lib/common.sh` 里的 `set -e` 会经 `source` 污染调用者，导致 `check.sh` 静默退出（EXIT=1 但无 ❌ 输出） | `common.sh` 改为库文件（不设 shell 选项） | M1 | ✅ 已修 | `check.sh` 从「EXIT=1 无输出」→「EXIT=0 通过 26 项」 |
+| **R49** | **本轮实测发现**：`（已合并进 scripts/qingnang.mjs）` 里的 `set -e` 会经 `source` 污染调用者，导致 `check.sh` 静默退出（EXIT=1 但无 ❌ 输出） | `common.sh` 改为库文件（不设 shell 选项） | M1 | ✅ 已修 | `check.sh` 从「EXIT=1 无输出」→「EXIT=0 通过 26 项」 |
 | **R50** | **本轮实测发现**：`doctor.sh` 内存显示成 `256 GBG`（模板已含单位又拼了 G） | `doctor.sh` 加数字提取 | M2 | ✅ 已修 | 现显示 `20 核 / 256 GB` |
 | **R44** | **主人澄清路线**「青囊目前**独立、多 agent 适配**；做完后与 DSH Desktop **forge 合并**，产出**独立的小胰宝社区版 DSH Desktop**（含青囊 + DSH 嵌入开发 + 数据库接入）」 | **ADR-012** | — | ✅ 已记录 | **A35**（零宿主专属代码）+ **A36**（五条接缝产物稳定） |
 
@@ -84,12 +84,12 @@
 | **A9** | M3 | 每张知识卡含 `source` + `reviewed_by`（未审校 `pending-review`）+ 正文声明 | 🟢 | `glossary.md` / `_TEMPLATE.md` 均带 |
 | **A10** | M4 | 每个 server 的 manifest `version` 与 npm 一致 | 🟢 | 装后实版本 5/5 与 manifest 一致 |
 | **A11** | M4 | 每个 server 完成 MCP `initialize` 握手 | 🟢 | **5/5 通过**（离线垫片模式） |
-| **A12** | M4 | 每个 server 的 `license ∈ {MIT,Apache-2.0,ISC,BSD-3-Clause}` | 🟢 | `healthcheck.sh` 含白名单校验，5/5 通过 |
+| **A12** | M4 | 每个 server 的 `license ∈ {MIT,Apache-2.0,ISC,BSD-3-Clause}` | 🟢 | `healthcheck.mjs` 含白名单校验，5/5 通过 |
 | **A13** | M5 | `SKILL.md` 含降级链与「绝不编造未检索到的内容」条款 | 🟢 | SKILL.md §5 失败与降级 |
 | **A14** | M5 | 无凭据端到端：PubMed 检索返回 ≥1 条（含 PMID + 标题 + 链接） | ⬜ | 通道已握手，端到端待跑 |
 | **A15** | M5 | 无凭据端到端：unified-trial 检索返回 ≥1 条（含登记号） | ⬜ | 通道已握手，端到端待跑 |
 | **A15b** | M5 | 无凭据 → 自动降 PubMed 且**降级可观察**；有凭据 → 命中 KnowS。无法测则记 `⚠️` | ⬜ | 待跑 |
-| **A16** | M6 | 假身份证/手机号/住院号 fixture → `pre-commit` 失败；干净仓库 → 通过 | 🟢 | `phi_scan.py --staged` EXIT=0（目前干净） |
+| **A16** | M6 | 假身份证/手机号/住院号 fixture → `pre-commit` 失败；干净仓库 → 通过 | 🟢 | `phi_scan.mjs --staged` EXIT=0（目前干净） |
 | **A17** | M6 | 假 API Key fixture → gitleaks 命中 | ⬜ | gitleaks 未装（pre-commit 会自动拉取） |
 | **A18** | M2 | `QINGNANG_TELEMETRY=on` → `deploy.sh` 拒绝启动；`doctor.sh` 报 `❌` | 🟢 | `qcheck_telemetry` 已实现；`doctor.sh` [7/9] 断言 off |
 | **A19** | M2 | `~/.qingnang/private` 权限 `0700` | 🟢 | 实建并验证 0700 |
@@ -115,7 +115,7 @@
 | **A39** | M2 | 实测**至少走过一次非首选档** | 🟢 | JS 侧 pnpm 因 corepack 签名失败 → **降级 npm 成功**（213 包 / 7 分钟） |
 | **A40** | M1 | `git ls-files` 不含 `node_modules/` / `.venv/` / `mcp-servers/launch/` | 🟢 | 三项 `git check-ignore` 全 ✓ |
 | **A41** | M2 | 删掉 `node_modules/` 后重跑 `fetch-vendor.sh` 能恢复 | 🟢 | 首次安装 `npm install` EXIT=0 |
-| **A42** | M2 | 构建完成后**离线**仍能通过 `healthcheck.sh`（垫片不联网） | 🟢 | 5 垫片全本地 `node <entry>`，无 `npx` 联网 |
+| **A42** | M2 | 构建完成后**离线**仍能通过 `healthcheck.mjs`（不联网） | 🟢 | `node scripts/qingnang.mjs serve <id>` 直起本地入口，无 `npx` 联网 |
 
 ### 2.1 无法自动化的评审项（人工判定）
 
@@ -150,7 +150,7 @@
 
 > **🟢 状态说明**：立项轮把 M1–M6 的**可验证骨架**一并落地了（超出原计划：原只做立项文档）。
 > 这是有意的——骨架可跑才能证明 SPEC 契约不是纸上谈兵。**但正式验收（A1–A36 全绿 + 端到端）仍待 SPEC 批准后执行。**
-> 已实测通过的：`check.sh` 26 项、`doctor.sh` 9 项 EXIT=0、MCP 握手 5/5、`phi_scan.py` EXIT=0。
+> 已实测通过的：`qingnang.mjs check` 全绿、`qingnang.mjs doctor` 9 项 EXIT=0、MCP 握手 5/5、`phi_scan.mjs` EXIT=0。
 
 ---
 
@@ -162,7 +162,7 @@
 | P2 | 本地 git | `No commits yet on main`，`origin/main [gone]`，未跟踪 `docs/` + `.ipynb_checkpoints/` |
 | P3 | 许可证核查 | pubmed repo=Apache-2.0 / npm=MIT（不一致属实）；unified-trial repo=MIT / npm=MIT（**干净**）；KnowS repo=NONE（瑕疵确认）；PDAC-prompts=Apache-2.0；get-biji npm=MIT（repo 仍缺文件） |
 | P4 | 离线数据包实况 | `xyb-corpus-2026-10-06` 共 4 资产 ≈12MB（cde 1MB / chictr 0MB / ictrp 1MB / **veeva_ctv 10MB**） |
-| P5 | 参考实现核对 | `Development/Starchart/scripts/deploy.sh`（306 行，模块化 step_*）+ `tasks/CHG-*/` 三件套 + `scripts/check.sh` 均存在 |
+| P5 | 参考实现核对 | `Development/Starchart/scripts/deploy.sh`（306 行，模块化 step_*）+ `tasks/CHG-*/` 三件套 均存在（Starchart 侧参考实现） |
 | P6 | 环境缺口 | `gitleaks` 未安装（M6 由 pre-commit 自动拉取，属预期）；`tasks/` 目录本轮新建 |
 | P7 | 体积修正 | 母文档 §10.1 目标 ≤500MB → **实测数据仅 ~12MB**，建议收紧至 ≤150MB（含索引与知识卡） |
 | **P8** | **DSH 生态事实核查**（本轮新增） | 社区主流桌面端 = **`anywhere-labs/dsh-desktop`**（MIT，**30,780★**，1436 fork，2026-08-13 建仓，2026-10-14 07:55 更新）；org `anywhere-labs`（2026-05-22 建，3 个公开仓库）另有 `Agents-Anywhere`(1666★) / `framefactory-plugin` |
@@ -200,18 +200,18 @@ git status --porcelain                            # 期望：输出为空
 stat -c '%a' ~/.qingnang/private                  # 期望：700
 
 # ── 遥测唯一档位（A18）─────────────────────────────────────
-QINGNANG_TELEMETRY=on bash scripts/deploy.sh --mode=source; echo "EXIT=$?"   # 期望非 0
+QINGNANG_TELEMETRY=on node scripts/qingnang.mjs deploy --mode=source; echo "EXIT=$?"   # 期望非 0
 
 # ── 部署与体检（A4 / A5）───────────────────────────────────
-bash scripts/deploy.sh --mode=source > /tmp/d1.log 2>&1; echo "EXIT=$?"
-bash scripts/deploy.sh --mode=source > /tmp/d2.log 2>&1; echo "EXIT=$?"
-bash scripts/doctor.sh; echo "EXIT=$?"             # 无凭据档期望 0
+node scripts/qingnang.mjs deploy --mode=source > /tmp/d1.log 2>&1; echo "EXIT=$?"
+node scripts/qingnang.mjs deploy --mode=source > /tmp/d2.log 2>&1; echo "EXIT=$?"
+node scripts/qingnang.mjs doctor; echo "EXIT=$?"             # 无凭据档期望 0
 
 # ── MCP 通道（A10–A12）─────────────────────────────────────
 node -e "const m=require('./mcp-servers/manifest.json');console.log(m.servers.map(s=>s.id+' '+s.package+'@'+s.version+' '+s.license).join('\n'))"
 npm view mcp-pubmed-llm-server version            # 期望：3.0.0
 npm view unified-trial-mcp version                # 期望：0.3.1
-bash mcp-servers/healthcheck.sh                   # 期望：两通道握手成功
+node mcp-servers/healthcheck.mjs                   # 期望：两通道握手成功
 
 # ── 技能层体积（A7）───────────────────────────────────────
 wc -c skills/qingnang/INJECT.md skills/qingnang/SKILL.md   # ≤2048 / ≤14336
@@ -224,17 +224,17 @@ awk '/^```bash$/,/^```$/' README.md > /tmp/spell.sh   # 抽部署咒语
 bash /tmp/spell.sh; echo "EXIT=$?"                     # 干净环境期望 0
 
 # ── 凭据 dryrun（A21，K3）─────────────────────────────────
-bash scripts/deploy.sh --dry-run; echo "EXIT=$?"       # 期望 0，且未写入任何文件
+node scripts/qingnang.mjs deploy --dry-run; echo "EXIT=$?"       # 期望 0，且未写入任何文件
 
 # ── DSH 配置幂等（A22）────────────────────────────────────
-bash scripts/deploy.sh --mode=agent --host=dsh && bash scripts/deploy.sh --mode=agent --host=dsh
+node scripts/qingnang.mjs deploy --mode=agent --host=dsh && node scripts/qingnang.mjs deploy --mode=agent --host=dsh
 # 期望：DSH MCP 配置中 qingnang_* 条目数不变
 
 # ── 敏感信息闸（A16 / A17）────────────────────────────────
 pre-commit run --all-files; echo "EXIT=$?"         # 干净仓库期望 0；含 fixture 期望非 0
 
 # ── 聚合自检 ───────────────────────────────────────────────
-bash scripts/check.sh; echo "EXIT=$?"
+node scripts/qingnang.mjs check; echo "EXIT=$?"
 ```
 
 > **脱敏铁律**：以上命令与产出**不得**写入本机绝对路径、内网地址、代理凭据；执行阶段回填证据时同样遵守。

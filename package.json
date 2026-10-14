@@ -12,12 +12,12 @@
   "scripts": {
     "build:env": "pnpm install --frozen-lockfile=false",
     "rebuild:env": "pnpm install --force",
-    "doctor": "bash scripts/doctor.sh",
-    "deploy:source": "bash scripts/deploy.sh --mode=source",
-    "deploy:agent": "bash scripts/deploy.sh --mode=agent",
-    "probe": "bash scripts/probe-host.sh",
-    "check": "bash scripts/check.sh",
-    "vendor:fetch": "bash scripts/fetch-vendor.sh"
+    "doctor": "node scripts/qingnang.mjs doctor",
+    "deploy:source": "node scripts/qingnang.mjs deploy --mode=source",
+    "deploy:agent": "node scripts/qingnang.mjs deploy --mode=agent",
+    "probe": "node scripts/qingnang.mjs probe",
+    "check": "node scripts/qingnang.mjs check",
+    "vendor:fetch": "node scripts/qingnang.mjs fetch"
   },
   "_comment_engines": "unified-trial-mcp 要求 node >=22.13.0，是所有 MCP 里最严的约束，故整体取该下限。",
   "dependencies": {

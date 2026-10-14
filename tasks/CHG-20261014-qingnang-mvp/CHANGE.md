@@ -166,7 +166,7 @@ standing_authorization: false
 | # | 模块 | 交付物 | 验收锚点 |
 |---|---|---|---|
 | **M1** | 仓库骨架 | 目录结构、`MANIFEST.json`、`.env.example`、`.gitignore`（含 `private/` 加固）、`LICENSE`、`README.md`、`CONTRIBUTING.md`、PR 模板 | A1–A3 |
-| **M2** | 部署与体检 | `scripts/deploy.sh`（`--mode=source` / `--mode=agent`，幂等）、`scripts/doctor.sh`（逐通道 ✅/⬜/❌） | A4–A6 |
+| **M2** | 部署与体检 | `scripts/qingnang.mjs`（唯一入口，跨平台）：`fetch` / `deploy --mode=source\|agent`（幂等）/ `doctor`（逐通道 ✅/⬜/❌）/ `probe` | A4–A6 |
 | **M3** | 技能层 v0 | `INJECT.md`（≤2KB）+ `SKILL.md`（≤14KB）+ `references/pancreas/` 首批知识卡（由 Apache-2.0 的 PDAC 提示词资产清洗而来） | A7–A9 |
 | **M4** | 双免费通道 | vendor/依赖 `unified-trial-mcp`（MIT，最干净）+ `mcp-pubmed-llm-server`（Apache-2.0）+ 统一 MCP 健康检查 | A10–A12 |
 | **M5** | 降级链与铁律 | SKILL.md 路由表写死降级链（KnowS 未配 → PubMed 兜底）、无凭据档端到端问答可跑 | A13–A15 |
@@ -223,7 +223,7 @@ standing_authorization: false
 | **K10** | **本包是「为 Agent 而做」**：不是搜集开发者项目，而是把 **skill + MCP 都囊括进来并做耦合**，优化**路由调用网络与调用效率** | **ADR-011** 新增；四条准入判据 + 三种合并方式 + 双向引用耦合契约；新增冻结契约 `MERGE_CONTRACT.md`；锚点 A30/A31 |
 | **K11** | **移植 `/ai-spec init` 规范到用户部署阶段**：探测用户宿主机（硬件/网络/代理）→ 写入 Agent 注入文档；**保留动脑子原则**；**去掉 codebase 硬门控**（医学场景不需要） | **ADR-008**（`HOST_PROFILE.md` + `probe-host.sh`）+ **ADR-009**（移植与裁剪表 + 医学五条加强项）；锚点 A27/A28/A33/A34 |
 | **K12** | **设计哲学与原则要写进 README、AGENTS.md、CLAUDE.md**：项目定位 / 开发逻辑 / 目的 / 最重要实现的效果 | **SPEC §4.10**「治理文档必写内容」四文件必写四要素；锚点 A29 |
-| **K14** | **能力层直接 pull 进项目内部**：认可的 skill + MCP 放进本仓，部署时在本项目工作区构建环境；**不要太轻量化**（大小没事，共享环境性价比高） | SPEC §4.11 环境构建契约（E1–E8）；`package.json` / `pyproject.toml` / `scripts/fetch-vendor.sh` / `mcp-servers/launch/`；实测 **127MB / 5 通道握手 5/5** |
+| **K14** | **能力层直接 pull 进项目内部**：认可的 skill + MCP 放进本仓，部署时在本项目工作区构建环境；**不要太轻量化**（大小没事，共享环境性价比高） | SPEC §4.11 环境构建契约（E1–E8）；`package.json` / `pyproject.toml` / `scripts/qingnang.mjs fetch` / `mcp-servers/launch/`；实测 **127MB / 5 通道握手 5/5** |
 | **K15** | **全链降级链**：环境部署也要 fallback（能 uv 就先 uv，没有就 python venv）；**fallback 思想要贯穿环境配置、skill、mcp 调用**，写进 AGENTS.md / CLAUDE.md | **ADR-013** + `AGENTS.md` §1（降级链铁律六节，已与 CLAUDE.md 逐字一致）；`fetch-vendor.sh` JS 三档（pnpm→npm→yarn）+ Python 三档（uv→venv→conda）；锚点 A37–A39 |
 | **K13** | **路线三段式**：青囊（本项目，**独立 + 多 agent 适配**）→ **forge 合并** DSH Desktop → **小胰宝社区版 DSH Desktop**（**独立项目**，含青囊 + DSH 嵌入开发 + 数据库接入） | **ADR-012** 新增；五条 **forge 接缝**（S1–S5）；锚点 A35/A36 |
 
@@ -279,7 +279,7 @@ standing_authorization: false
 | **R16（新）** | **母文档把「资产包」与「桌面发行版」混为一个项目**，导致范围膨胀（五端、依赖 DSH 排期） | 中 | ❌ **文档结构问题** | 主人已澄清（K2/K7/K13）：本包只管资产打包；四端；DSH 合并另立项目（ADR-006/ADR-012） |
 | **R17（新）** | **新增搜索 MCP 的许可与元数据不一致**：`open-websearch` 上游 LICENSE = Apache-2.0 但 `package.json.license` = `None`；`openalex-mcp-server` = **ISC**（不在原白名单）；`bing-cn-mcp` = MIT ✅ | 低 | ❌ **未识别** | ① 白名单显式加入 **ISC**（与 MIT 实质等同）；② `open-websearch` 以**上游 LICENSE 文件**为准并在 manifest 注明；③ 锁版以 **npm 已发布版本**为准（本机版本与 npm 不一致，见 SPEC §1.6 U9） |
 | **R19（新）** | **依赖布局风险**：5 个 MCP 合并后共享 16 个依赖，其中 `@modelcontextprotocol/sdk` 有 **5 个不同版本区间**、`express` 有 **4.x/5.x 大版本冲突**；npm 扁平化可能解析错版本 | **中** | ❌ **未识别** | ① JS 侧**首选 pnpm**（隔离式布局，天然支持多版本并存），已在降级链首选位；② 兜底 npm 时脚本**显式警告**该风险；③ 用垫片隔离布局差异（SPEC §4.11 E3） |
-| **R20（新）** | **`scripts/lib/common.sh` 的 `set -e` 经 `source` 污染调用者**，导致 `check.sh` 静默退出（EXIT=1 但无 ❌ 输出） | 低 | ❌ **未识别** | 已修：`common.sh` 改为**纯库文件**（不设任何 shell 选项），各脚本自行声明 `set`；已在注释里写明原因防复发（TRACE R49） |
+| **R20（新）** | **`（已合并进 scripts/qingnang.mjs）` 的 `set -e` 经 `source` 污染调用者**，导致 `check.sh` 静默退出（EXIT=1 但无 ❌ 输出） | 低 | ❌ **未识别** | 已修：`common.sh` 改为**纯库文件**（不设任何 shell 选项），各脚本自行声明 `set`；已在注释里写明原因防复发（TRACE R49） |
 | **R18（新）** | **`open-websearch` 依赖 Chromium/Playwright 能力**（README 出现 CDP、Playwright fallback），可能显著增大安装体积与失败面 | 中 | ❌ **未识别** | ① 默认 `SEARCH_MODE=request` **强制避开浏览器**；② `doctor.sh` 显式提示；③ 若必须 Chromium，则给「仅 request 模式」降级路径（SPEC §5M2 风险行 + A32） |
 
 ---
