@@ -25,11 +25,10 @@
     "bing-cn-mcp": "1.0.2",
     "mcp-pubmed-llm-server": "3.0.0",
     "openalex-mcp-server": "1.0.5",
-    "unified-trial-mcp": "0.3.1"
+    "unified-trial-mcp": "0.3.1",
+    "@xiaoyibao_npm/knows-mcp-server": "0.2.2",
+    "get-biji-mcp": "0.1.1"
   },
   "_comment_deps": "【版本必须钉死，不允许 ^ 或 ~】理由：MCP 行为变化会直接影响医疗信息的检索结果，不可接受漂移。升版必须走 CHG（见任务目录）。",
-  "_comment_reserved": {
-    "@xiaoyibao_npm/knows-mcp-server": "通道5·高级医学证据 —— 需凭据 + 上游待补 LICENSE，未纳入",
-    "get-biji-mcp": "通道6·病友经验 —— 上游双仓库均无 LICENSE，未纳入"
-  }
+  "_comment_reserved": {}
 }

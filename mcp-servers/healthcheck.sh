@@ -23,7 +23,7 @@ with open(manifest_path, encoding="utf-8") as f:
 
 servers = m.get("servers", [])
 wl = set(m.get("license_whitelist", []))
-ok, fail = [], []
+ok, fail, optional = [], [], []
 
 INIT = json.dumps({
     "jsonrpc": "2.0", "id": 1, "method": "initialize",
@@ -42,6 +42,16 @@ for s in servers:
     cmd = s.get("command") or []
     if not cmd:
         fail.append((sid, "manifest 未声明 command"))
+        continue
+    # 凭据门通道：缺必需凭据时记「选填未配」而非失败
+    # 设计意图：凭据是可选增强，不是可用性门槛（AGENTS.md §1.3 降级链）
+    required_keys = [e.get("key") for e in s.get("env", []) if e.get("required")]
+    missing = [k for k in required_keys if not os.environ.get(k)]
+    if missing and s.get("credential_gate"):
+        optional.append((sid, "未配凭据 %s（降级到 %s）" % (",".join(missing), s.get("degrade_to") or "无")))
+        continue
+    if missing:
+        fail.append((sid, "缺必需凭据 %s" % ",".join(missing)))
         continue
     env = dict(os.environ)
     for e in s.get("env", []):
@@ -68,13 +78,21 @@ for s in servers:
 
 if not quiet:
     print("青囊 · MCP 通道健康检查")
-    print("─" * 40)
+    print("─" * 46)
     for sid in ok:
         print("  ✓ %s" % sid)
+    for sid, why in optional:
+        print("  ⬜ %s — %s" % (sid, why))
     for sid, why in fail:
         print("  ❌ %s — %s" % (sid, why))
-    print("─" * 40)
-    print("通过 %d / 共计 %d" % (len(ok), len(servers)))
+    print("─" * 46)
+    print("可用 %d / 选填未配 %d / 共计 %d" % (len(ok), len(optional), len(servers)))
+    if optional:
+        print("")
+        print("选填未配的通道不影响使用：")
+        for sid, why in optional:
+            print("  · %s：%s" % (sid, why))
+        print("  · 需要时自行申请凭据，填入 .env 后重跑 doctor.sh")
     if fail:
         print("")
         print("修复提示：")

@@ -2,7 +2,7 @@
 change_id: CHG-20261014-qingnang-mvp
 version: 1.0
 status: draft
-prd_ref: PRD.md（不存在 → 阻塞项 B1，见 CHANGE §5.1）
+prd_ref: PRD.md（v1.0 draft，待主人批准 —— 见 PRD §11 P1）
 health_ref: null
 supersedes: null
 approved_by: null
@@ -14,6 +14,7 @@ scope: Phase 1 + Phase 2 可独立验收部分（M1–M6）
 
 > **本文件状态**：`draft` = **可评审，但不可定稿**。
 > 按 `ai-spec` 流程约束，PRD（`PRD.md`）未 `APPROVED` 前不得进入工程定稿（DoR §8.1）。
+> **更新（2026-10-14）**：`PRD.md` 已产出（v1.0 draft，含用户/场景/目标/成功标准/12 条用户故事/5 条边界故事）。**待主人批准后 SPEC 方可定稿。**
 > 评审时请重点看：§2 设计选择、§4 冻结契约与文件清单、§5 里程碑验收命令——这三处定了，后面就是执行。
 
 ---
@@ -91,7 +92,7 @@ scope: Phase 1 + Phase 2 可独立验收部分（M1–M6）
 
 | # | 问题 | 类型 | 处置 |
 |---|---|---|---|
-| U1 | **PRD 缺失**（`PRD.md` 不存在） | **阻塞定稿** | 见 CHANGE §5.1 B1；主人已给出定位（K1/K5），**仍需落成文件** |
+| U1 | ~~PRD 缺失~~ → **PRD 已产出，待批准** | **阻塞定稿** | `PRD.md` v1.0 draft 已就位（§1 用户 / §2 场景 / §3 目标 / §4 成功标准 / §5 用户故事）。**仅差主人批准**（PRD §11 P1） |
 | ~~U2~~ | ~~落点品牌：社区 org vs 中立~~ | ✅ **已关闭**（K2） | 落社区 org，**品牌 = 小胰宝**，不再讨论 |
 | U3 | ~~仓库许可证选择~~ | ✅ **已定** | **Apache-2.0**（含专利授权，与多数上游一致，也是 `open-websearch` 的选择）；LICENSE 内附医学免责声明（非条款部分） |
 | U4 | 仓库名大小写（`QingNang` → `qingnang`）与 git 署名 | 阻塞首个 commit | CHANGE §5.2 D5 |

@@ -6,7 +6,7 @@ created_at: 2026-10-14
 updated_at: 2026-10-14
 priority: P0
 owner: 主人（产品/命名/落点决策）+ AI Agent（实现）
-prd_ref: PRD.md（待产出 —— 阻塞项 B1）
+prd_ref: PRD.md（v1.0 draft 已产出，待批准）
 health_ref: null（全新空仓库，无历史债基线可审）
 source_docs:
   - docs/QingNang_Community_Asset_Pack_Architecture_and_DevPlan_v1.0_20261014.md
@@ -191,7 +191,7 @@ standing_authorization: false
 
 | # | 问题 | 阻塞什么 | 谁决定 | 建议 |
 |---|---|---|---|---|
-| **B1** | **PRD 缺失**——没有独立文件，只在 v1.0 文档里分散成愿景 + 五条铁律 + 各阶段 AC | SPEC 定稿 | 主人 | ✅ **定位已由主人给出**（见 §5.3 K1），但**仍需落成 `PRD.md` 文件**才能满足 ai-spec 的定稿前置条件。建议由我从 v1.0 文档 §1/§1.3/§11/§12 抽出（工作量≈半天）。 |
+| ~~**B1**~~ | ~~PRD 缺失~~ | ✅ **已解决** | — | **`PRD.md` v1.0 draft 已产出**（含用户 U1–U3 / 场景 A–F / 目标 G1–G7 / 硬指标 M1–M8 / 12 条用户故事 / 5 条边界故事）。**仅差主人批准**。 |
 | **B2** | **许可证债**：KnowS（NONE）、get-biji 双仓（NONE）、HADS（NONE）、Medical-Record-Organizer（NONE） | Phase 2 的 KnowS 通道、Phase 3 的经验库 | 社区（Sam） | 建议**先只上 MIT 的 unified-trial + Apache-2.0 的 pubmed**，把许可债清完再逐步纳入。**不因等待而停工**。 |
 | **B3** | **离线数据包再分发条款**未书面确认（`xyb-corpus-2026-10-06`，~12MB，包含 veeva_ctv 10MB 来自第三方？） | Phase 3 知识包 | 主人引荐 ↔ Sam/数据小组 | `veeva_ctv.tar.gz`（10MB）**来源需单独确认**——Veeva 是商业临床数据平台，这一项的再分发权最可疑。建议**先只装 ChiCTR/CDE/ICTRP 三个官方登记来源（共 ~2MB）**，veeva 部分挂起。 |
 
@@ -269,7 +269,7 @@ standing_authorization: false
 | R6 | NCCN 指南全文版权 | 中 | ✅ §13-6 | 只做要点摘录 + 官方链接 |
 | **R7（新）** | **`veeva_ctv.tar.gz`（10MB，占数据包 83%）来源是商业临床数据平台，再分发权最可疑** | **中高** | ❌ **文档未单列** | **建议先不装 veeva 部分**；只用 ChiCTR/CDE/ICTRP 三个官方登记来源 |
 | **R8（新）** | **`--mode=agent` 跨四宿主路径矩阵未定义**，只测一个宿主会「本地绿、别人红」 | 中 | ❌ **文档未展开** | SPEC 要求列全宿主路径矩阵 + 每宿主验证命令 |
-| **R9（新）** | **PRD 缺失导致 SPEC 无法「不发明需求」** —— ai-spec 明确禁止在 PRD 未批准时定稿 | 中 | ❌ 流程性 | B1 先解，或明确以 v1.0 文档替代 PRD |
+| ~~R9~~ | ~~PRD 缺失导致 SPEC 无法「不发明需求」~~ | 低 | ❌ 曾存 | ✅ **已解决**：`PRD.md` v1.0 draft 已就位；待批准后 SPEC 可定稿 |
 | **R10（新）** | **本机 git 署名非社区身份**，首次 commit 会写进历史 | 低 | ❌ | 首次 commit 前确认（署名值不在仓库内记录） |
 | R11 | 无凭据档体验（KnowS 需申请） | 低 | ✅ §13-4 | 降级链 + README 申请教程 |
 | R12 | 许可债未清就 vendor | 低 | ✅ §13-5 | 本 CHG 只 vendor MIT/Apache-2.0 两个 |
