@@ -21,6 +21,8 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, chmodSync, cpSync, 
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createConnection } from 'node:net'
+import http from 'node:http'
+import https from 'node:https'
 import os from 'node:os'
 
 // ── 基础 ────────────────────────────────────────────────────────
@@ -68,7 +70,7 @@ function runQuiet(cmd, args = []) {
   })
 }
 
-/** 探测本地端口是否在监听 */
+/** 探测本地端口是否在监听（⚠️ 只证明端口有东西，不证明它是可用代理） */
 function portOpen(port, timeout = 800) {
   return new Promise((res) => {
     const s = createConnection({ host: '127.0.0.1', port })
@@ -77,6 +79,63 @@ function portOpen(port, timeout = 800) {
     s.once('connect', () => done(true))
     s.once('timeout', () => done(false))
     s.once('error', () => done(false))
+  })
+}
+
+// ── 代理验证（关键：验证而非假设）───────────────────────────────
+//
+// ❌ 曾经的 bug：只测「端口在监听」就推荐它当代理。
+//    实测本机 7890 端口有东西监听，但它不转发 → 按它的建议配代理必失败。
+// ✅ 正确做法：真的发一个请求过去，看能不能通。
+//
+// 判定顺序（对齐 AGENTS.md §1.2 降级链）：
+//   ① 直连通 → 不需要代理（最简）
+//   ② 直连不通 → 逐个验证候选代理，只有真正能转发的才推荐
+//   ③ 都不行 → 明说「需自配代理」，给命令
+
+/** 测直连某 HTTPS 站点 */
+function testDirect(host, timeout = 6000) {
+  return new Promise((resolve) => {
+    const t0 = Date.now()
+    const req = https.request({ host, port: 443, path: '/', method: 'HEAD', timeout }, (res) => {
+      resolve({ ok: res.statusCode > 0, ms: Date.now() - t0, code: res.statusCode })
+      req.destroy()
+    })
+    req.on('error', (e) => resolve({ ok: false, ms: Date.now() - t0, error: e.code || e.message }))
+    req.on('timeout', () => { req.destroy(); resolve({ ok: false, ms: timeout, error: 'timeout' }) })
+    req.end()
+  })
+}
+
+/** 测 HTTP 代理是否真的能转发（用 CONNECT 打通到目标 443） */
+function testProxy(proxyUrl, targetHost, timeout = 6000) {
+  return new Promise((resolve) => {
+    let u
+    try { u = new URL(proxyUrl) } catch { return resolve({ ok: false, error: 'URL 不合法' }) }
+    // socks5 无法用 Node 内置 http 模块验证（需要额外依赖）→ 如实报告「无法验证」
+    if (/^socks/i.test(u.protocol)) {
+      return resolve({ ok: null, error: 'socks5 协议无法用内置模块验证（不代表不可用）' })
+    }
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+      return resolve({ ok: false, error: `不支持的协议 ${u.protocol}` })
+    }
+    const t0 = Date.now()
+    const headers = {}
+    if (u.username) {
+      headers['Proxy-Authorization'] = 'Basic ' + Buffer.from(`${decodeURIComponent(u.username)}:${decodeURIComponent(u.password || '')}`).toString('base64')
+    }
+    const req = http.request({
+      host: u.hostname, port: Number(u.port) || 80, method: 'CONNECT',
+      path: `${targetHost}:443`, timeout, headers,
+    })
+    req.on('connect', (res) => {
+      const ok = res.statusCode === 200
+      resolve({ ok, ms: Date.now() - t0, code: res.statusCode, error: ok ? null : `代理返回 ${res.statusCode}` })
+      req.destroy()
+    })
+    req.on('error', (e) => resolve({ ok: false, ms: Date.now() - t0, error: e.code || e.message }))
+    req.on('timeout', () => { req.destroy(); resolve({ ok: false, ms: timeout, error: 'timeout' }) })
+    req.end()
   })
 }
 
@@ -207,16 +266,36 @@ async function probe() {
   const cpuModel = (cpus[0]?.model || '').trim() || null
   const cores = cpus.length
 
+  // ── 代理：验证而非假设（见 testDirect / testProxy 的注释）──
+  // ❌ 旧做法：只测「端口在监听」就推荐它当代理。
+  //    实测本机 7890 有东西监听但不转发 → 按这个建议配代理必然失败。
+  // ✅ 新做法：真的发请求验证；同时测直连（回答「需不需要」而不只是「可不可用」）。
   const proxyPorts = [7890, 7897, 1080, 8888, 8118, 10808]
-  const open = []
-  const results = await Promise.all(proxyPorts.map((p) => portOpen(p)))
-  proxyPorts.forEach((p, i) => { if (results[i]) open.push(p) })
+  const listening = []
+  const openResults = await Promise.all(proxyPorts.map((p) => portOpen(p)))
+  proxyPorts.forEach((p, i) => { if (openResults[i]) listening.push(p) })
 
   const envProxy = process.env.https_proxy || process.env.HTTPS_PROXY
     || process.env.http_proxy || process.env.HTTP_PROXY || null
-  let suggested = null
-  for (const p of [7890, 7897, 1080, 8888, 8118]) if (open.includes(p)) { suggested = `http://127.0.0.1:${p}`; break }
-  if (!suggested && envProxy) suggested = envProxy
+
+  const PROBE_TARGET = 'eutils.ncbi.nlm.nih.gov'
+  const directTest = await testDirect(PROBE_TARGET)
+
+  // 候选 = 本机监听的端口 + 环境变量声明的；逐个真实验证（并行，避免串行 6s×N）
+  const candidates = [...new Set([
+    ...listening.map((p) => `http://127.0.0.1:${p}`),
+    ...(envProxy ? [envProxy] : []),
+  ])]
+  const tested = await Promise.all(candidates.map(async (url) => {
+    const r = await testProxy(url, PROBE_TARGET)
+    return { url, ...r }
+  }))
+  const verified = tested.filter((t) => t.ok === true).map((t) => ({ url: t.url, ms: t.ms }))
+  const broken = tested.filter((t) => t.ok === false).map((t) => ({ url: t.url, error: t.error }))
+  const unverifiable = tested.filter((t) => t.ok === null).map((t) => ({ url: t.url, note: t.error }))
+
+  // 语义：直连可用时【不推荐】代理（避免用户去配一个不必要的东西）
+  const suggested = directTest.ok === true ? null : (verified.length ? verified[0].url : null)
 
   const findPython = () => {
     for (const c of IS_WIN ? ['python', 'py', 'python3'] : ['python3', 'python']) {
@@ -266,7 +345,17 @@ async function probe() {
       venv: !!findPython(),
       conda: (() => { const p = which('conda'); if (!p) return null; const r = runQuiet(p, ['--version']); return (r.stdout || '').match(/(\d+\.\d+\.\d+)/)?.[1] ?? null })(),
     },
-    proxy: { env: envProxy, open_ports: open, suggested_url: suggested },
+    proxy: {
+      env: envProxy,
+      listening_ports: listening,     // 端口有东西（不一定能用）
+      direct_ok: directTest.ok,       // 直连目标站是否通
+      direct_ms: directTest.ms,
+      verified,                       // ✅ 真实验证能用
+      broken,                         // ❌ 端口在监听但不能转发
+      unverifiable,                   // ⚠️ 无法用内置模块验证（如 socks5）
+      suggested_url: suggested,
+      probe_target: PROBE_TARGET,
+    },
     hosts,
     probed_at: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
   }
@@ -278,7 +367,16 @@ async function probe() {
 function renderHostProfile(p) {
   const naive = '未检测到'
   const g = (v) => (v === null || v === undefined || v === '' ? naive : String(v))
-  const proxyHint = p.proxy.suggested_url || `${naive}，若需代理请手填`
+  // 代理段落的语义：先回答「需不需要」，再回答「用哪个」
+  const pr = p.proxy
+  const directOk = pr.direct_ok === true
+  const needProxy = !directOk
+  const verifiedList = pr.verified || []
+  const brokenList = pr.broken || []
+  const unverList = pr.unverifiable || []
+  const proxyCell = verifiedList.length
+    ? `**${verifiedList[0].url}**　（已实测可用，${verifiedList[0].ms}ms）`
+    : (needProxy ? '**未找到可用的代理**（需自配）' : '**不需要代理**（直连已通）')
 
   const installHints = {
     win32: {
@@ -331,25 +429,26 @@ ${p.runtimes.python_cmd ? `| Python 命令 | \`${p.runtimes.python_cmd}\` | — 
 
 ## 网络与代理 ⚠️ 搜索失败先看这里
 
+> **探测方式**：真的发请求验证过（不是只看端口在不在监听）。
+> 验证目标：\`${pr.probe_target}:443\`
+
 | 项 | 值 |
 |---|---|
-| 环境变量代理 | ${g(p.proxy.env)} |
-| 本机监听的常见代理端口 | ${p.proxy.open_ports.length ? p.proxy.open_ports.join(', ') : '（未检测到）'} |
-| **建议使用的代理地址** | **${proxyHint}** |
-
-**怎么用这个代理地址**：
+| **要不要代理** | ${directOk ? '**不需要** —— 直连已通（' + pr.direct_ms + 'ms）' : '**需要** —— 直连不通（' + (pr.direct_ms || '?') + 'ms / ' + (pr.direct_error || '失败') + '）'} |
+| **验证可用的代理** | ${proxyCell} |
+| 环境变量声明的代理 | ${g(pr.env)} |
+| 端口在监听（**不代表能用**） | ${(pr.listening_ports || []).length ? pr.listening_ports.join(', ') : '（无）'} |
+${brokenList.length ? `| ❌ 验证失败的候选 | ${brokenList.map((b) => `\`${b.url}\`（${b.error}）`).join('、')} |\n` : ''}${unverList.length ? `| ⚠️ 无法用内置模块验证 | ${unverList.map((b) => `\`${b.url}\`（${b.note}）`).join('、')} |\n` : ''}
+**怎么用**：
 
 \`\`\`
-运行期（实际搜索时，open-websearch 用）：
-   USE_PROXY=true PROXY_URL=${p.proxy.suggested_url || '<你的代理>'} node scripts/qingnang.mjs serve web_search
-
-安装期（拉 npm 包时，两阶段独立，只配一个不够）：
-   npm --proxy ${p.proxy.suggested_url || '<你的代理>'} --https-proxy ${p.proxy.suggested_url || '<你的代理>'} install
+${directOk
+  ? '本机直连可用，无需代理：\n   USE_PROXY=false'
+  : `运行期（实际搜索时，open-websearch 用）：\n   USE_PROXY=true PROXY_URL=${verifiedList[0]?.url || '<你的代理>'} node scripts/qingnang.mjs serve web_search\n\n安装期（拉 npm 包时，两阶段独立，只配一个不够）：\n   npm --proxy ${verifiedList[0]?.url || '<你的代理>'} --https-proxy ${verifiedList[0]?.url || '<你的代理>'} install`}
 \`\`\`
 
-> 若「建议代理地址」是「未检测到」，说明本机没探测到代理：
-> · 国内访问境外站点失败 → 你可能需要自配代理，然后把地址填到 \`.env\` 的 \`PROXY_URL\`
-> · 能直连 → 无需代理，保持 \`USE_PROXY=false\`
+> **为什么列出「端口在监听但不代表能用」**：本机可能有程序占了 7890 端口，
+> 但它不是 HTTP 代理。只按端口判断会给出错误建议，所以这里区分「监听」与「验证通过」。
 
 ## 环境构建器（降级链）
 
@@ -732,20 +831,90 @@ function doUninstall(opts) {
 }
 
 // MCP 配置片段生成（相对路径 → 绝对路径）
-function mcpConfigFor(host) {
+/**
+ * 生成 MCP 配置（多格式，供不同宿主/嵌入方消费）
+ *
+ * 格式说明：
+ *   claude / pi  → { mcpServers: { <name>: {command,args,env} } }   （Claude Code 惯例）
+ *   codex        → { mcp_servers: {...} }                            （Codex 惯例）
+ *   openclaw     → { servers: {...} }
+ *   dsh          → [{ transport:'stdio', serverName, command, args, env, cwd, ... }]
+ *                  **DSH 后端嵌入专用**：对齐 DSH 内核 packages/mcp/mcp-client 的 StdioConfig
+ *   generic      → 中性结构，含青囊自有元数据（许可/通道/降级），供任意宿主二次映射
+ */
+function mcpConfigFor(host = 'claude') {
   const m = loadManifest()
-  const servers = {}
-  for (const s of m.servers) {
-    servers[s.server_name] = {
-      command: process.execPath,                        // node 绝对路径，跨平台稳定
+
+  const toEntry = (s) => ({
+    command: process.execPath,   // node 绝对路径（跨平台稳定，不依赖 PATH）
+    args: [join(REPO, 'scripts', 'qingnang.mjs'), 'serve', s.id],
+    env: Object.fromEntries(
+      (s.env || []).filter((e) => e.value).map((e) => [e.key, String(e.value)]),
+    ),
+  })
+
+  if (host === 'dsh') {
+    // 对齐 DSH StdioConfig：transport / serverName / command / args / env / cwd /
+    //                      toolCallTimeoutMs / failOnStartupError / reconnect?
+    return m.servers.map((s) => ({
+      transport: 'stdio',
+      serverName: s.server_name,
+      command: process.execPath,
       args: [join(REPO, 'scripts', 'qingnang.mjs'), 'serve', s.id],
-      env: Object.fromEntries((s.env || []).filter((e) => e.value).map((e) => [e.key, String(e.value)])),
+      env: Object.fromEntries(
+        (s.env || []).filter((e) => e.value).map((e) => [e.key, String(e.value)]),
+      ),
+      cwd: REPO,
+      toolCallTimeoutMs: 60000,
+      // 凭据门通道：启动失败【不应】拖垮整个插件（缺凭据是正常的选填状态）
+      failOnStartupError: !s.credential_gate,
+      _qingnang: {
+        channel: s.channel,
+        displayName: s.display_name,
+        license: s.license,
+        credentialRequired: !!s.credential_gate,
+        degradeTo: s.degrade_to ?? null,
+        degradeNote: s.degrade_note ?? null,
+      },
+    }))
+  }
+
+  if (host === 'generic') {
+    return {
+      schema_version: 1,
+      pack: 'qingnang',
+      pack_version: JSON.parse(readFileSync(join(REPO, 'MANIFEST.json'), 'utf8')).pack_version,
+      repo_root: REPO,          // 嵌入方需要绝对路径来定位技能层
+      skill_path: join(REPO, 'skills', 'qingnang'),
+      servers: m.servers.map((s) => ({
+        id: s.id,
+        channel: s.channel,
+        display_name: s.display_name,
+        server_name: s.server_name,
+        transport: s.transport,
+        command: process.execPath,
+        args: [join(REPO, 'scripts', 'qingnang.mjs'), 'serve', s.id],
+        env_required: (s.env || []).filter((e) => e.required).map((e) => e.key),
+        env_optional: (s.env || []).filter((e) => !e.required && e.secret).map((e) => e.key),
+        credential_required: !!s.credential_gate,
+        degrade_to: s.degrade_to ?? null,
+        license: s.license,
+        upstream: s.upstream,
+      })),
+      injection_files: {
+        main: join(REPO, 'skills', 'qingnang', 'INJECT.md'),
+        search_runtime: join(REPO, 'skills', 'qingnang', 'SEARCH_RUNTIME.md'),
+        skill: join(REPO, 'skills', 'qingnang', 'SKILL.md'),
+        host_profile: join(REPO, 'skills', 'qingnang', 'HOST_PROFILE.md'),
+      },
     }
   }
-  if (host === 'claude' || host === 'pi') return { mcpServers: servers }
+
+  const servers = {}
+  for (const s of m.servers) servers[s.server_name] = toEntry(s)
   if (host === 'codex') return { mcp_servers: servers }
   if (host === 'openclaw') return { servers }
-  return { mcpServers: servers }
+  return { mcpServers: servers }   // claude / pi / 默认
 }
 
 function printMcpConfig(host) {
@@ -994,6 +1163,7 @@ function parseArgs(argv) {
     else if (a === '--py-only') o.pyOnly = true
     else if (a.startsWith('--mode=')) o.mode = a.slice(7)
     else if (a.startsWith('--host=')) o.host = a.slice(7)
+    else if (a.startsWith('--format=')) o.format = a.slice(9)
     else o._.push(a)
   }
   return o
@@ -1014,7 +1184,10 @@ async function main() {
         say(`平台：${p.os.name} ${p.os.release}（${p.os.arch}）${p.is_windows ? ' · Windows 原生' : ''}`)
         say(`Node：v${p.runtimes.node} · Python：${p.runtimes.python || '未装'}`)
         say(`CPU：${p.hardware.cpu_model} × ${p.hardware.cpu_cores} 核 · 内存 ${p.hardware.memory_gb} GB`)
-        say(`代理：${p.proxy.suggested_url || '未检测到'} · 监听端口：${p.proxy.open_ports.join(', ') || '无'}`)
+        const pr = p.proxy
+        const need = pr.direct_ok === true ? '不需要（直连通）' : '需要'
+        const v = (pr.verified || []).length ? pr.verified[0].url : '未找到可用代理'
+        say(`代理：${need} · 已验证可用：${v} · 监听端口：${(pr.listening_ports || []).join(', ') || '无'}`)
         say(`构建器：pnpm=${p.builders.pnpm || '-'} npm=${p.builders.npm || '-'} uv=${p.builders.uv || '-'} venv=${p.builders.venv ? '有' : '无'}`)
       }
       return
@@ -1022,9 +1195,17 @@ async function main() {
     case 'doctor': return cmdDoctor()
     case 'check': return cmdCheck()
     case 'mcp-config': {
-      const host = detectHost(args.host)
-      if (args.json) say(JSON.stringify(mcpConfigFor(host), null, 2))
-      else printMcpConfig(host)
+      const fmt = args.format || args.host || detectHost(args.host)
+      const VALID = ['claude', 'pi', 'codex', 'openclaw', 'dsh', 'generic']
+      if (!VALID.includes(fmt)) {
+        err(`未知格式：${fmt}`)
+        say(`可用：${VALID.join(' / ')}`)
+        process.exit(1)
+      }
+      // 六种格式【统一输出纯 JSON】—— 对齐 P1「为 Agent 而做」：
+      //   机读是默认，人话解释只在 deploy --mode=agent 流程里出现（那里确实给人看）
+      // ❌ 曾经的不一致：claude/pi/codex/openclaw 输出「人话头 + JSON」，程序无法直接解析
+      say(JSON.stringify(mcpConfigFor(fmt), null, 2))
       return
     }
     case 'help':
@@ -1034,6 +1215,7 @@ async function main() {
     default:
       err(`未知命令：${cmd}`)
       say('可用：serve / fetch / deploy / probe / doctor / check / mcp-config')
+      say('  mcp-config --format=dsh|claude|codex|openclaw|generic   生成 MCP 配置（后端嵌入用 --format=dsh）')
       process.exit(1)
   }
 }

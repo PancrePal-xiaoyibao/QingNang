@@ -243,7 +243,8 @@
         "kind": "mcp_initialize",
         "timeout_s": 30
       },
-      "credential_gate": true
+      "credential_gate": true,
+      "degrade_note": "KnowS 是「高级医学证据」，PubMed 是它的免费子集，所以降级语义成立：缺凭据 → 降 PubMed，并在回答中明示降级事实。"
     },
     {
       "id": "get_biji",
@@ -293,7 +294,8 @@
         "timeout_s": 30
       },
       "credential_gate": true,
-      "credential_note": "凭据留空即可。对应得到笔记（getnote）账号的 API 凭据，用户自行申请。"
+      "credential_note": "凭据留空即可。对应得到笔记（getnote）账号的 API 凭据，用户自行申请。",
+      "degrade_note": "该能力【唯一】——没有任何其他通道提供「病友经验」。刻意【不】把 web_search 当降级目标：未筛选的论坛内容贴上「病友经验」标签有医学风险。缺凭据时正确行为是：明示该通道未启用，而不是拿网页凑。"
     }
   ],
   "reserved": [],
@@ -303,5 +305,6 @@
   "_comment_license_convention": "许可判定惯例：优先上游 LICENSE 文件；文件缺失时以 npm 元数据声明为准，并在 license_note 记录差异 + 在 references/SOURCES.md 登记待补。",
   "_comment_credential_gate": "credential_gate=true 的通道：缺凭据时 doctor/healthcheck 记 ⬜（选填未配，不算失败），不计入 ❌。这是刻意的——凭据是可选的增强，不是可用性门槛。见 AGENTS.md §1.3 降级链。",
   "_comment_entrypoint": "宿主启动 MCP 的唯一入口是 `node scripts/qingnang.mjs serve <channel-id>`。它跨平台、零额外依赖（Node 是 MCP 的必备运行时）。曾用过 bash 垫片（mcp-servers/launch/*），已废弃——那会让 Windows 必须装 WSL。",
-  "_comment_secret": "env 条目的 secret:true 表示这是「真凭据」（API Key / 邮箱），doctor 的凭据矩阵只列这些。配置项（MODE/USE_PROXY/TOPIC_ID 等）不列，避免噪音。"
+  "_comment_secret": "env 条目的 secret:true 表示这是「真凭据」（API Key / 邮箱），doctor 的凭据矩阵只列这些。配置项（MODE/USE_PROXY/TOPIC_ID 等）不列，避免噪音。",
+  "_comment_degrade": "degrade_to 的两种合法形态：\n  ① 有目标（如 knows→pubmed）：语义成立，缺凭据时自动降级 + 明示\n  ② null + degrade_note：该能力唯一，无合理降级目标 → 缺凭据时【明示未启用】，绝不用别的通道凑\n禁止：为了「看起来有降级」而随便填一个语义不忠的目标。"
 }

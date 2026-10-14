@@ -181,8 +181,53 @@ for s in d['servers']:
 "
 ```
 
-**如果你用 DSH 或别的宿主**：把 `manifest.json` 的每个 server 翻译成该宿主的 MCP 配置格式即可。
-本包**故意不写宿主专属代码**（见「技术特点」第 6 条），所以不会被某个宿主的配置格式绑死。
+#### 其他宿主 / 深度嵌入（含 DeepSeek Harness）
+
+本包**故意不写宿主专属代码**（见「技术特点」第 10 条），而是提供**六种现成的配置格式**，任何宿主都能直接映射：
+
+```bash
+node scripts/qingnang.mjs mcp-config --format=claude     # Claude Code / pi
+node scripts/qingnang.mjs mcp-config --format=codex      # Codex
+node scripts/qingnang.mjs mcp-config --format=openclaw   # OpenClaw
+node scripts/qingnang.mjs mcp-config --format=dsh        # DeepSeek Harness（后述）
+node scripts/qingnang.mjs mcp-config --format=generic    # 中性格式（含许可/通道/降级元数据）
+```
+
+六种格式**全部输出纯 JSON**，可直接被程序消费。
+
+##### DeepSeek Harness 的三点须知
+
+| 项 | 情况 |
+|---|---|
+| **能接吗** | **能**。DSH 支持 MCP server，青囊的 7 条通道都能接 |
+| **怎么接** | `--format=dsh` 直接产出对齐 DSH 内核 `StdioConfig` 的结构，**后端工程师复制即用** |
+| **技能层怎么办** | ⚠️ **DSH 没有 `SKILL.md` 目录约定**（实测：它的插件是 Cordis TS 插件）。所以技能层不能像 Claude Code 那样自动加载，需要**以指令片段注入** |
+
+`--format=dsh` 的输出长这样（每条通道一项）：
+
+```json
+{
+  "transport": "stdio",
+  "serverName": "qingnang_web",
+  "command": "/abs/path/to/node",
+  "args": ["/abs/path/to/scripts/qingnang.mjs", "serve", "web_search"],
+  "env": { "MODE": "stdio", "SEARCH_MODE": "request" },
+  "cwd": "/abs/path/to/repo",
+  "toolCallTimeoutMs": 60000,
+  "failOnStartupError": true,
+  "_qingnang": { "channel": 1, "license": "Apache-2.0", "credentialRequired": false, "degradeTo": "bing_cn" }
+}
+```
+
+**给后端嵌入方的三个要点**：
+
+1. **`command` 用绝对路径 node**（不依赖 PATH）—— 桌面应用打包后 PATH 环境不可靠
+2. **`failOnStartupError: false`** 用于凭据门通道（KnowS / get-biji）—— 缺凭据是正常状态，不该拖垮整个插件
+3. **`_qingnang` 是附加元数据**（通道号 / 许可 / 降级目标）—— DSH 可忽略；但做 UI 提示时有用（例如「此能力需凭据」）
+
+> **注意边界**：本包提供的是**可嵌入的 MCP 能力 + 技能文档**。
+> 把它变成 DSH 的**原生 Cordis 插件**（需要写 `dsh-plugin-*` npm 包）是**独立的工程项目**，
+> 不属于本包范围（见 `tasks/.../SPEC.md` §3.10 ADR-012 的 forge 接缝设计）。
 
 #### 凭据配置（全部选填）
 
@@ -200,6 +245,107 @@ node scripts/qingnang.mjs doctor     # 体检，逐项显示 ✓ 已配 / ⬜ �
 | `OPENALEX_EMAIL` | OpenAlex 提速 | 用共享池，较慢 |
 
 **申请入口**见下方「🔑 凭据申请」一节。
+
+---
+
+## 🎁 部署后，你的智能体获得什么能力
+
+> 部署完成 = **你的 Agent 立刻多了 28 个可调用工具 + 1 套医学决策能力**。
+> 下面是从 7 条通道**实测抓取**的真实工具名（不是估值）。
+
+### 一、MCP 工具（28 个，5 条零凭据通道）
+
+#### 通道 1 · 通用网页搜索（6 个工具，免凭据）
+
+| 工具 | 干什么 |
+|---|---|
+| `search` | 多引擎网页搜索（bing / baidu / duckduckgo / brave / sogou / exa …） |
+| `fetchWebContent` | 抓取任意公开网页正文（默认纯 HTTP，**不启浏览器**） |
+| `fetchGithubReadme` | 读 GitHub 仓库 README |
+| `fetchCsdnArticle` | 读 CSDN 文章正文 |
+| `fetchJuejinArticle` | 读掘金文章正文 |
+| `fetchLinuxDoArticle` | 读 linux.do 帖子正文 |
+
+#### 通道 2 · 中文网页搜索（2 个工具，免凭据）
+
+| 工具 | 干什么 |
+|---|---|
+| `bing_search` | 必应中文搜索 |
+| `crawl_webpage` | 按检索结果抓正文（自动过滤黑名单站点） |
+
+#### 通道 3 · 医学与学术文献（13 个工具，免凭据）
+
+**PubMed（5 个）**
+
+| 工具 | 干什么 |
+|---|---|
+| `pubmed_search` | 检索生物医学文献，返回元数据与摘要 |
+| `pubmed_get_details` | 按 PMID 取完整元数据（支持批量） |
+| `pubmed_extract_info` | 只取指定章节（摘要/方法/结果/结论） |
+| `pubmed_find_related` | 找相关文献或综述（构建引用网络） |
+| `pubmed_manage_cache` | 查看缓存命中率与维护 |
+
+**OpenAlex（8 个）**
+
+| 工具 | 干什么 |
+|---|---|
+| `openalex_search` | 检索学术论文 |
+| `openalex_get_work` | 按 ID/DOI/PMID 取详情（含完整摘要） |
+| `openalex_batch_get_works` | 批量取多篇（比多次单取高效） |
+| `openalex_detect_fulltext` | 检测是否开放获取、取全文 URL |
+| `openalex_download_fulltext` | 下载开放获取 PDF 到本地 |
+| `openalex_get_fulltext_sections` | 取已下载论文的分章节内容 |
+| `openalex_cache_stats` | 缓存统计 / 清理 |
+| `openalex_system_check` | 检查 API 连通性与缓存状态 |
+
+#### 通道 4 · 临床试验（7 个工具，免凭据）
+
+| 工具 | 干什么 |
+|---|---|
+| `search_trials` | 多源检索试验并合并（含 `statuses` 覆盖状况） |
+| `get_trial_detail` | 按记录号取单条详情与原始字段 |
+| `get_record_evidence` | 取原始证据引用（HTML / 源 JSON / Word） |
+| `get_source_status` | 查各数据源就绪状态与数据截止日 |
+| `refresh_ictrp` | 刷新 WHO ICTRP 缓存（默认演练） |
+| `sync_ctv_index` | 构建/更新 CTV 本地索引（默认演练） |
+| `sync_chinadrugtrials` | 增量同步中国药物临床试验数据（需人工配 Cookie） |
+
+### 二、需凭据的通道（2 条，凭据留空即可，不影响上述 28 个工具）
+
+| 通道 | 凭据 | 拿到后多什么能力 |
+|---|---|---|
+| 通道 5 · 高级医学证据 | `KNOWS_API_KEY` + `KNOWS_API_HOST` | 循证医学证据、结构化指南摘要、证据等级 |
+| 通道 6 · 病友经验 | `GET_NOTE_API_KEY` | 病友实际经验、就医流程、副作用应对 |
+
+> **缺凭据的行为**：通道 5 自动降级到 PubMed + OpenAlex **并在回答中明示**；
+> 通道 6 明示「未启用」。**绝不拿别的通道凑数、绝不编造。**
+
+### 三、Skill 能力（不是工具，是「怎么用工具」的决策层）
+
+这部分是**给 Agent 的医学工作规程**，装了就有了：
+
+| 能力 | 内容 |
+|---|---|
+| **七步执行流** | 分类 → 边界检查 → 检索 → 核对 → 组织 → 标源 → 免责 |
+| **9 类问题路由** | 文献 / 试验 / 知识 / 政策 / 资讯 / 经验 / 证据 / 不该回答 / 急症 |
+| **五条医学铁律** | 不诊断 · 不给剂量 · 急症先就医 · 出处强制 · 审校声明 |
+| **六条分流铁律** | 先分类再检索 · 缺凭据不失效 · 绝不编造 · 中文优先 · 能并行不串行 |
+| **降级链** | 每处选择都有三档：首选 → 次选 → 兜底，且**必须可观察** |
+| **试验报告提纲** | 七章标准化专题报告（含 4 条青囊专属医学约束） |
+| **靶点速查表** | 12 个胰腺癌核心靶点的别名（防漏检） |
+| **NCCN 68 癌种清单** | 检索关键词表 + 版权硬约束（只摘要点不转载） |
+| **ChiCTR 检索指南** | 参数约束 + 「空结果 ≠ 没有研究」的诚实边界 |
+| **情报流水线** | 两阶段分离（抓取 / 消费）的订阅推送编排 |
+| **伦理话术库** | 遇「是不是复发」「吃多少」时的转介话术 |
+| **术语中英对照** | 胰腺癌术语表（病友看得懂） |
+
+### 四、本机适配（自动完成，你不用配）
+
+| 能力 | 内容 |
+|---|---|
+| **本机画像** | 探测硬件、网络、代理、构建器 → 写入 `HOST_PROFILE.md` |
+| **代理验证** | **真的发请求验证代理能用**（不是只看端口在不在监听） |
+| **宿主分派** | 自动识别 Claude Code / pi / OpenClaw / Codex 并装到对应位置 |
 
 ---
 
