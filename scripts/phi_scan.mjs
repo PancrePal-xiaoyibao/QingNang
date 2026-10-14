@@ -23,8 +23,8 @@ import { spawnSync } from 'node:child_process'
 
 const TTY = process.stdout.isTTY
 const C = TTY
-  ? { err: '\x1b[31m', ok: '\x1b[32m', rst: '\x1b[0m' }
-  : { err: '', ok: '', rst: '' }
+  ? { err: '\x1b[31m', ok: '\x1b[32m', dim: '\x1b[2m', rst: '\x1b[0m' }
+  : { err: '', ok: '', dim: '', rst: '' }
 
 // ── 扫描范围 ────────────────────────────────────────────────────
 const SCAN_EXT = new Set([
@@ -37,6 +37,47 @@ const SKIP_DIRS = new Set([
 ])
 // 这些文件天然含示例/占位，跳过凭据类规则（但仍扫 PHI）
 const PLACEHOLDER_FILES = new Set(['.env.example'])
+
+/*
+ * ── 第三方 vendor 区分（重要）────────────────────────────────────
+ *
+ * `skills/<x>/QINGNANG.md` 存在 = 该目录是【上游社区 skill 原样引入】
+ * （见 scripts/vendor-skills.mjs 与 ADR-011）。
+ *
+ * 为什么需要区分：
+ *   · 按 ADR-011，上游代码【一字未改】——我们不能改它的测试夹具
+ *   · 而脱敏类 skill（maskdesk / medical-desensitization）的测试夹具
+ *     必然长得像 PHI（这是它们的测试对象），例如 13800138000（业界通用假号）  # phi-scan: ignore
+ *
+ * 区分方式（不静默，不白名单化）：
+ *   · 自有代码命中 → 【拦截】，退出码 1
+ *   · vendor 代码命中 → 【单独列出 + 不拦截】，退出码仍可为 0
+ *     但仍逐条打印，方便审计；若 vendor 里真出现真 PHI，人能看见
+ */
+const VENDOR_MARKER = 'QINGNANG.md'
+const vendorCache = new Map()
+
+function isVendored(file) {
+  // 向上找到 skills/<name>/ 这一层，看有没有 QINGNANG.md
+  let dir = resolve(file)
+  for (let i = 0; i < 6; i++) {
+    dir = resolve(dir, '..')
+    const name = basename(dir)
+    if (name === 'skills') return false
+    if (vendorCache.has(dir)) return vendorCache.get(dir)
+    if (existsSync(join(dir, VENDOR_MARKER))) {
+      // 回填整条链的缓存
+      let d = resolve(file)
+      for (let j = 0; j < 6; j++) {
+        d = resolve(d, '..')
+        vendorCache.set(d, true)
+        if (basename(d) === 'skills') break
+      }
+      return true
+    }
+  }
+  return false
+}
 
 const IGNORE_RE = /#\s*phi-scan:\s*ignore/i
 
@@ -65,8 +106,11 @@ const RULES = [
     '时间 + 就诊行为 + 机构 = 三件套，可反推个人。请改为脱敏描述。'],
 
   ['API Key / Token / Secret',
-    /(api[_-]?key|secret|token|passwd|password)\s*[:=]\s*['"]?[A-Za-z0-9_-]{16,}/g,
-    '疑似凭据。凭据必须放 .env（已在 .gitignore 中），仓库内只允许 .env.example 里的空占位。'],
+    // 修正（2026-10-14）：原正则把 `token = get_access_token()` 这类
+    // 【函数调用】误判为凭据值（`get_access_token` 恰好 17 字符）。
+    // 收紧为：右边必须是字面量——要么带引号，要么含混合字符类。
+    /(api[_-]?key|secret|token|passwd|password)\s*[:=]\s*(?:"([A-Za-z0-9_\-.]{16,})"|'([A-Za-z0-9_\-.]{16,})'|([A-Za-z0-9_\-]*[A-Z0-9][A-Za-z0-9_\-]*[A-Za-z0-9]{12,}))(?!\s*\()/g,
+    '疑似凭据。凭据必须放 .env（已在 .gitignore 中），仓库内只允许 .env.example 里的空占位。取小写标识符、函数调用、变量名不算命中。'],
 
   ['私钥',
     /-----BEGIN [A-Z ]*PRIVATE KEY-----/g,
@@ -161,10 +205,12 @@ function main() {
 
   let total = 0
   let filesWithHits = 0
+  const vendorHits = []
 
   for (const path of [...new Set(iterFiles(targets, staged))].sort()) {
     const hits = scanFile(path)
     if (!hits.length) continue
+    if (isVendored(path)) { vendorHits.push([path, hits]); continue }
     filesWithHits++
     console.log(`\n${C.err}✗ ${path}${C.rst}`)
     for (const [ln, name, frag, why] of hits) {
@@ -176,13 +222,27 @@ function main() {
     }
   }
 
+  // vendor 部分：单独列出，不拦截
+  if (vendorHits.length) {
+    const n = vendorHits.reduce((a, [, h]) => a + h.length, 0)
+    console.log(`\n${C.dim}── 上游 vendor skill 命中（不拦截）──────────────────${C.rst}`)
+    console.log(`${C.dim}这些是社区 skill 原样引入的代码（ADR-011：上游一字未改）。${C.rst}`)
+    console.log(`${C.dim}命中集中在脱敏类 skill 的测试夹具上——那是它们的测试对象。${C.rst}`)
+    for (const [p, h] of vendorHits) {
+      const kinds = [...new Set(h.map((x) => x[1]))].join(' / ')
+      console.log(`${C.dim}  · ${p} （${h.length} 处：${kinds}）${C.rst}`)
+    }
+    console.log(`${C.dim}共 ${n} 处。如需上游修正，请向上游仓库提 issue（我们不改上游代码）。${C.rst}`)
+  }
+
   console.log('')
   if (total) {
     console.log(`${C.err}拦截：发现 ${total} 处疑似敏感信息（${filesWithHits} 个文件）。${C.rst}`)
     console.log('医疗信息属敏感个人信息（PIPL）。请按上方提示修改后再提交。')
     return 1
   }
-  console.log(`${C.ok}✓ 未发现敏感信息。${C.rst}`)
+  console.log(`${C.ok}✓ 本包自有代码未发现敏感信息。${C.rst}`)
+  if (vendorHits.length) console.log(`${C.dim}  （vendor 上游代码有 ${vendorHits.length} 个文件命中，已单独列出，未计入拦截）${C.rst}`)
   return 0
 }
 
