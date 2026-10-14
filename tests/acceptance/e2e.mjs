@@ -352,6 +352,22 @@ function testA34() {
 // ════════════════════════════════════════════════════════════════
 // 主流程
 // ════════════════════════════════════════════════════════════════
+// A43 · 离线 vendor 完整性（ADR-015）
+function testA43() {
+  if (!want('A43')) return
+  const vroot = join(REPO, 'vendor', 'node_modules')
+  const vrep = join(REPO, 'vendor', 'VENDOR.json')
+  if (!existsSync(vroot) || !existsSync(vrep)) {
+    return record('A43', 'fail', 'vendor 不存在', '跑 node scripts/vendor-mcp.mjs')
+  }
+  let rep; try { rep = JSON.parse(readFileSync(vrep, 'utf8')) } catch { return record('A43', 'fail', 'VENDOR.json 解析失败', vrep) }
+  const m = loadManifest()
+  const miss = m.servers.filter((s) => !existsSync(join(vroot, ...s.package.split('/'), 'package.json')))
+  if (miss.length) return record('A43', 'fail', `vendor 缺入口：${miss.map((x) => x.id).join(',')}`, '')
+  record('A43', 'ok', `vendor ${rep.package_count} 包 / ${(rep.bytes / 1048576).toFixed(1)}M / 入口 ${m.servers.length} 个`,
+    `平台: ${(rep.kept_platforms || []).join(' ')}`)
+}
+
 async function main() {
   console.log('青囊 · 端到端验收')
   console.log('════════════════════════════════════════')
@@ -360,6 +376,7 @@ async function main() {
 
   testA12()
   testA34()
+  testA43()
   await testA11()
   await testA15b()
   await testA23()

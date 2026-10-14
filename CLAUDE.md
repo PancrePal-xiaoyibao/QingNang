@@ -228,14 +228,35 @@
 ## 5. 注入层结构（改哪里）
 
 ```
-skills/qingnang/
-├── INJECT.md          ← 主注入（≤2KB）：常驻上下文，只宣告存在 + 指路 + 红线 + 搜索薄提示
-├── SEARCH_RUNTIME.md  ← 搜索分流表（≤8KB）：按需加载，六条通道怎么选
-├── HOST_PROFILE.md    ← 本机画像（运行时生成，不入库）：代理/硬件/运行时
-├── SKILL.md           ← 总体路由（≤14KB）：七步执行流 + 铁律 + 自检
-├── MERGE_CONTRACT.md  ← 合并契约：准入四条 + 合并三种 + 耦合契约
-└── references/        ← 厚参考：病种知识卡 / 指标解读 / 术语表（按需单文件读）
+skills/
+├── qingnang/                  ← 主技能（本包自写）
+│   ├── INJECT.md              ← 主注入（≤2KB）：常驻上下文，只宣告存在 + 指路 + 红线
+│   ├── SEARCH_RUNTIME.md      ← 搜索分流表（≤8KB）：按需加载，七条通道怎么选
+│   ├── HOST_PROFILE.md        ← 本机画像（运行时生成，不入库）：代理/硬件/运行时
+│   ├── SKILL.md               ← 总体路由（≤14KB）：两跳路由 + 五条红线 + 降级表
+│   ├── MERGE_CONTRACT.md      ← 合并契约：准入四条 + 合并三种 + 耦合契约
+│   └── references/            ← 本包自写的厚参考（伦理 / 术语表 / 许可台账）
+│
+└── <11 个社区医学 skill>/      ← 原样引入（上游代码一字未改）
+    ├── SKILL.md               ← 上游文件（不改）
+    └── QINGNANG.md            ← 【青囊追加】适配层：许可 + 五条红线在本技能如何生效
 ```
+
+**十一一个社区 skill 清单**（引入脚本 `scripts/vendor-skills.mjs`）：
+
+| 分类 | skill |
+|---|---|
+| 临床试验 | `clinicaltrials-query-analysis` · `chictr-trials-collector` · `clinicaltrials-intel-skill` |
+| 临床指南 | `nccn-guideline-downloader` |
+| 知识生产 | `RAG-content-processor` |
+| 健康档案 | `aura_health_profile` |
+| 病历隐私 | `medical-desensitization` · `maskdesk` |
+| 影像 | `xyb_dicom_download_skills` |
+| 笔记 | `getnote-openclaw` |
+| 提示词资产 | `PDAC-multi-agents-prompts` |
+
+**离线依赖**：`vendor/node_modules/`（265 包 / 46MB）+ `vendor/VENDOR.json` 清单。
+引入脚本 `scripts/vendor-mcp.mjs`，校验 `--verify`。**目录名必须叫 node_modules**（Node 解析规则），见 ADR-015。
 
 **三层注入为什么分离**（不许合并成一个大文件）：
 - `INJECT.md` 常驻上下文 → **越短越好**，只给「去找 SEARCH_RUNTIME」这一层引导。
@@ -251,6 +272,8 @@ skills/qingnang/
 | 加病种知识 | `references/<病种>/*.md` | ❌ 不要塞进 `SKILL.md` |
 | 加医学红线 | `INJECT.md` + `SKILL.md` 红线区 | — |
 | 改本机探测项 | `（已合并进 scripts/qingnang.mjs）` | ❌ 不要硬编码进 `SKILL.md` |
+| 引入/更新社区 skill | `scripts/vendor-skills.mjs` 的 `VENDORED` 清单 | ❌ 不要改上游 `SKILL.md`（适配层写 `QINGNANG.md`） |
+| 更新离线依赖 | `scripts/vendor-mcp.mjs` | ❌ 不要把 `vendor/` 加回 `.gitignore` |
 
 ---
 

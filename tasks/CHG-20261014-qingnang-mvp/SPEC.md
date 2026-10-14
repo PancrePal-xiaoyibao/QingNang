@@ -335,6 +335,48 @@ scope: Phase 1 + Phase 2 可独立验收部分（M1–M6）
 
 > **验收**：**A37** `AGENTS.md` 含降级链铁律六节且 `CLAUDE.md` 逐字一致；**A38** `fetch-vendor.sh` 的 JS/Python 两条链各有三档条件分支且**兜底档会明示**；**A39** 实测至少走过一次非首选档（本机：pnpm→npm、uv 命中首选）。
 
+### 3.11b ADR-014 · 全链路只允许 Node（**删掉 bash/WSL 依赖**）
+
+| 项 | 内容 |
+|---|---|
+| **决策** | 本包所有可执行逻辑**只用 Node（.mjs）**。删除全部 `.sh`，`mcp-servers/healthcheck.mjs`、`scripts/qingnang.mjs`、`scripts/vendor-*.mjs` 均为 Node。**不再需要 WSL / Git Bash / Cygwin。** |
+| **被否方案** | ① 保留 bash + 要求 Windows 用户装 WSL（真实用户是病友，装 WSL 就是断头路） ② 写 PowerShell + bash 双份（双倍维护，且 PowerShell 执行策略是另一个坑） |
+| **理由** | **MCP 的必备运行时就是 Node**——宿主只要装得下 MCP，就必然有 Node。把整条工具链收拢到 Node，**零新增依赖**，却把 Windows 门槛从「装 WSL」降到「装 Node」。 |
+| **可逆性** | 高（脚本逻辑不变，只换宿主语言） |
+| **后果** | 删除 10 个 `.sh`；`manifest` 的 `command` 从 `sh scripts/xxx.sh` 改为 `node scripts/qingnang.mjs serve <id>`；`mcp-config` 六种格式**全部输出纯 JSON**（机器优先，符合 P1） |
+
+**实测（本机）**：`node --check` 全部通过；`node_modules` 完全移走后 5 条零凭据通道仍能完成 `initialize` 握手。
+
+### 3.11c ADR-015 · MCP 离线 vendor（**一次 clone → 立刻可用**）
+
+| 项 | 内容 |
+|---|---|
+| **决策** | 7 个 MCP 及其**完整依赖闭包**（265 包）vendor 进仓库 `vendor/node_modules/`（46MB，已裁瘦）。`git clone` 后**不跑 npm install、不联网**即可启动。 |
+| **被否方案** | ① 只存 `package-lock.json`（仍需 npm registry，代理不稳时部署就挂） ② git submodule（仍需网络逐子仓拉） ③ 只 vendor 5 个包不含依赖（运行时报 `ERR_MODULE_NOT_FOUND`） |
+| **理由** | G1「一键部署真的能一键」，用户是病友不是工程师。**把不确定性从用户机器上挪走**，是唯一能保证的方法。 |
+| **可逆性** | 高（删除 `vendor/` 即回退到 npm install 路径） |
+| **后果** | `.gitignore` 需 `!vendor/node_modules/**` 例外；`fetch` 改为**优先校验 vendor**（零网络），vendor 不完整才回退 pnpm/npm/yarn；`check` 增加 vendor 完整性断言 |
+
+**目录名必须叫 `node_modules`（踩坑记录）**：
+Node 解析 `import 'dotenv'` 时，从文件所在目录逐级向上，在**每个祖先目录 D** 里查 `D/node_modules/dotenv`。
+包放在 `vendor/node_modules/<pkg>/` 时，祖先 `vendor` 正好提供 `vendor/node_modules/✓`。
+若放 `vendor/mcp/<pkg>/`，祖先里**没有任何目录叫 node_modules**，解析立刻失败（实测 `ERR_MODULE_NOT_FOUND: dotenv`）。
+
+**裁剪策略（跨平台约束优先）**：
+
+| 裁什么 | 省了 |
+|---|---|
+| sourcemap（`*.map`） | 32 MB |
+| TS 类型声明（`*.d.ts` / `*.ts`） | 约 3 MB |
+| 测试 / 文档 / CI 配置 | 少量 |
+| 非目标平台原生二进制 | 约 12 MB |
+| `pdf-parse` 多余 3 个 pdf.js 版本 | 约 21 MB |
+
+**保留的平台（不裁）**：`linux_x64` `linux_arm64` `darwin_x64` `darwin_arm64` `win32_x64` `win32_arm64`。
+理由：产物要装到**别人的机器**上，跨平台优先于体积。
+
+**验收**：**A40** `node scripts/vendor-mcp.mjs --verify` 退出码 0；**A41** `node_modules` 移走后 `serve pubmed` / `serve openalex` / `serve bing_cn` / `serve web_search` / `serve unified_trial` 五个通道都完成 `initialize` 握手；**A42** `check` 报出 vendor 包数与保留平台。
+
 ### 3.12 数据流（本 CHG 覆盖范围，Phase 3 部分以虚线标出）
 
 ```

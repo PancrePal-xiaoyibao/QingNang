@@ -116,6 +116,11 @@
 | **A40** | M1 | `git ls-files` 不含 `node_modules/` / `.venv/` / `mcp-servers/launch/` | 🟢 | 三项 `git check-ignore` 全 ✓ |
 | **A41** | M2 | 删掉 `node_modules/` 后重跑 `fetch-vendor.sh` 能恢复 | 🟢 | 首次安装 `npm install` EXIT=0 |
 | **A42** | M2 | 构建完成后**离线**仍能通过 `healthcheck.mjs`（不联网） | 🟢 | `node scripts/qingnang.mjs serve <id>` 直起本地入口，无 `npx` 联网 |
+| **A43** | M2 | **离线 vendor 完整性**（ADR-015）：`vendor/node_modules/` 含 7 个 MCP 全部入口包 | 🟢 | `vendor-mcp.mjs --verify` EXIT=0；265 包 / 46.4M；`check` 报出包数与保留平台 |
+| **A44** | M2 | **纯 vendor 可启动**：移走 `node_modules/` 后 5 条零凭据通道仍完成 `initialize` 握手 | 🟢 | 实测 `mv node_modules /tmp && serve {web_search,pubmed,openalex,bing_cn,unified_trial}` 全部握手成功 |
+| **A45** | M3 | **社区 skill 以原样引入**（非拍平成 references）：`skills/` 下 11 个可装载 skill 目录，各含上游 `SKILL.md` 或 `QINGNANG.md` | 🟢 | `vendor-skills.mjs` 引入 11 项；`deploy --mode=agent --dry-run` 列出 12 个 skill |
+| **A46** | M3 | **适配层齐备**：每个 vendor skill 目录均含 `QINGNANG.md`（写明许可 + 五条红线在本技能如何生效） | 🟢 | 11/11 均含；`check` 的 S1 断言未报违约 |
+| **A47** | M1 | `AGENTS.md` §5 与 `CLAUDE.md` 逐字一致，且已反映多 skill 与 vendor 结构 | 🟢 | `cmp` EXIT=0 |
 
 ### 2.1 无法自动化的评审项（人工判定）
 
@@ -143,10 +148,13 @@
 | **V1.4** | **立项收尾 + 治理文档层（README / AGENTS.md / CLAUDE.md / CONTRIBUTING / LICENSE / MANIFEST）落盘 + 首次 commit/push** | M0 | ✅ | 2026-10-14 |
 | M1 | 仓库骨架与治理文件（含脚本骨架） | pre-M | 🟢 **骨架已落地**（待正式验收） | 2026-10-14 |
 | M2 | 部署与体检脚本（含 `probe-host.sh`） | M1 | 🟢 **骨架已落地**（待正式验收） | 2026-10-14 |
-| M3 | 技能层 v0（三注入 + 合并契约 + 参考层） | M1 | 🟢 **骨架已落地**（待正式验收） | 2026-10-14 |
-| M4 | **六条搜索通道**接入（四条零凭据） | M1,M2 | 🟢 **5/6 已接入并握手通过**（KnowS/get-biji 待许可债） | 2026-10-14 |
-| M5 | 路由与降级链 | M3,M4 | 🟢 **骨架已落地**（端到端待跑） | 2026-10-14 |
-| M6 | 第一道敏感信息闸 | M1 | 🟢 **配置已落地**（gitleaks 待装实测） | 2026-10-14 |
+| M3 | 技能层 v0（三注入 + 合并契约 + 参考层 + **11 个社区 skill**） | M1 | 🟢 **骨架已落地** | 2026-10-14 |
+| M4 | **七条搜索通道**接入（五条零凭据） | M1,M2 | 🟢 **5/7 已握手通过**（KnowS/get-biji 待许可债） | 2026-10-14 |
+| M5 | 路由与降级链 | M3,M4 | 🟢 **骨架已落地** | 2026-10-14 |
+| M6 | 第一道敏感信息闸 | M1 | 🟢 **配置已落地** | 2026-10-14 |
+| **M7** | **离线 vendor（ADR-015）**：265 包随仓库分发，clone 即可跑 | M1 | 🟢 **已落地并实测** | 2026-10-14 |
+| **M8** | **社区 skill 引入（ADR-011 修订）**：11 项原样引入 + 适配层 | M3 | 🟢 **已落地** | 2026-10-14 |
+| **M9** | **跨平台收拢（ADR-014）**：删全部 `.sh`，只留 Node | M1 | 🟢 **已落地并实测** | 2026-10-14 |
 
 > **🟢 状态说明**：立项轮把 M1–M6 的**可验证骨架**一并落地了（超出原计划：原只做立项文档）。
 > 这是有意的——骨架可跑才能证明 SPEC 契约不是纸上谈兵。**但正式验收（A1–A36 全绿 + 端到端）仍待 SPEC 批准后执行。**
@@ -170,6 +178,9 @@
 | **P10** | **DSH 插件机制实测** | 插件 = **Cordis TS 插件**（`export const name` / `export const inject` / `export function apply(ctx)`）；提供 `desktopProfiles` / `desktopPnpm` 两个公开 Host service；**无 `SKILL.md` 目录约定** |
 | **P11** | **DSH MCP 结构实测** | 内核 `packages/mcp/mcp-client/src/index.ts:50-73` 定义 `StdioConfig`：`transport`/`serverName`（须匹配 `[A-Za-z0-9_-]{1,32}`）/`command`/`args`/`env`/`cwd`/`toolCallTimeoutMs`/`failOnStartupError`/`reconnect?`；工具名形如 `mcp__<serverName>__<rawName>` |
 | **P12** | **DSH Draft 边界** | `dsh-community-fabric` 的 manifest/capability/统一事件模型仍是 **RFC Draft**，官方明写「**尚不能作为依赖或发布目标**」→ 本 CHG 不碰 |
+| **P13** | **社区 skill 全量核查**（本轮新增） | 用 `gh repo list` 枚举两 org：`opencare-skillhub` 42 个 + `PancrePal-xiaoyibao` 130 个。医学相关且许可干净的 **11 项**已 vendor 引入；**12 项**因无 LICENSE 文件列为许可债（见 `SOURCES.md` §五） |
+| **P14** | **vendor 目录名踩坑**（实测） | 包放 `vendor/mcp/<pkg>/` 时 `import 'dotenv'` 报 `ERR_MODULE_NOT_FOUND` —— Node 只认逐级祖先里的 `node_modules/` 目录。**必须放 `vendor/node_modules/<pkg>/`**。已写入 ADR-015 |
+| **P15** | **跨平台体积取舍**（实测） | koffi 含 18 个平台二进制（28M）。裁掉非目标平台后仍需保留 6 个（`linux/darwin/win32` × `x64/arm64`）——**产物要装到别人机器上，跨平台优先于体积**。另裁 sourcemap（32M）+ TS 类型（2.8M）+ `pdf-parse` 多余 3 个 pdf.js 版本（21M），最终 131M → **46.4M** |
 
 ---
 
