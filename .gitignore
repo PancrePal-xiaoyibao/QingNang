@@ -1,0 +1,41 @@
+# ── 隐私沙箱（铁律：绝不可入库）────────────────────────────────
+private/
+**/private/
+
+# ── 本机画像（含代理/硬件信息，机器相关，不共享）────────────────
+skills/qingnang/HOST_PROFILE.md
+
+# ── 凭据 ──────────────────────────────────────────────────────
+.env
+.env.local
+*.key
+*.pem
+!**/*.key.example
+
+# ── 构建产物（由 scripts/fetch-vendor.sh 生成，不入库）──────────
+node_modules/
+.venv/
+.venv
+mcp-servers/launch/
+
+# ── 运行时与缓存 ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+# MCP 运行期缓存（如 pubmed 论文缓存，非用户数据但属运行产物）
+cache/
+
+# ── 编辑器 / 系统 ─────────────────────────────────────────────
+.ipynb_checkpoints/
+.DS_Store
+*.swp
+*.bak
+*.bak.*
+*.hostinit-bak.*
+
+# ── 部署与测试产物 ────────────────────────────────────────────
+deploy.log
+doctor.log
+/tmp/
+out/
