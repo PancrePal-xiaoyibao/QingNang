@@ -32,28 +32,59 @@
 
 ---
 
-## 二、合并进来的 skill 资产（方式 B：改进后并入）
+## 二、引入的社区 skill 资产（**方式 A：原样引入 + 适配层**）
 
-| 来源 skill | 许可 | 并入到 | 改了什么 |
-|---|---|---|---|
-| [clinicaltrials-query-analysis](https://github.com/opencare-skillhub/clinicaltrials-query-analysis) | **Apache-2.0** | `references/trials/report-outline.md`<br>`references/trials/targets.md` | 抽取「标准化报告提纲」与靶点清单；**新增青囊四条医学约束**（不给治疗建议 / 不承诺医保 / 状态带采集时间 / 只用公开联系方式）；移除公众号排版细节 |
-| [chictr-trials-collector](https://github.com/opencare-skillhub/chictr-trials-collector) | **Apache-2.0** | `references/trials/chictr-guide.md` | 保留参数约束与数据质量规则；**补充「诚实边界」四条纪律**；移除采集器源码细节 |
-| [clinicaltrials-intel-skill](https://github.com/opencare-skillhub/clinicaltrials-intel-skill) | **Apache-2.0** | `references/trials/intel-pipeline.md` | 抽取「两阶段分离」核心契约 + 三条关键契约；**补充三条面向病友的约束**；移除 TG/GeWe/飞书/FastGPT 具体接入 |
-| [nccn-guideline-downloader](https://github.com/opencare-skillhub/nccn-guideline-downloader) | **Apache-2.0** | `references/guidelines/nccn-cancer-types.md` | 保留 68 项癌种清单；**新增版权硬约束章节**（只做要点摘录 + 官方链接）；移除自动下载脚本与 Cookie 配置 |
+> **为什么原样引入而非拆解**（ADR-011 修订）：社区 skill 自带 `SKILL.md` + 可执行脚本，**是能力不是文档**。
+> 拍平进 `references/` 会丢掉可执行性——那是降级，不是合并。所以：
+> **上游文件一字不改，青囊在每个 skill 目录里追加一份 `QINGNANG.md` 适配层**（写明许可 + 青囊五条红线在本技能上如何生效）。
+>
+> 引入脚本：`node scripts/vendor-skills.mjs`（可复现、可审计）。
 
-> **方式 B 的硬要求**：每个并入文件的开头都必须注明「来源 + 改动 + 许可」。已全部标注。
+| 引入的 skill | 上游 | 许可 | 上游形态 | 适配层加了什么 |
+|---|---|---|---|---|
+| `clinicaltrials-query-analysis` | [opencare](https://github.com/opencare-skillhub/clinicaltrials-query-analysis) | **Apache-2.0** | 22 py + SKILL.md | 四条医学约束（不给治疗建议 / 不承诺医保 / 状态带采集时间 / 只用公开联系方式） |
+| `chictr-trials-collector` | [opencare](https://github.com/opencare-skillhub/chictr-trials-collector) | **Apache-2.0** | 18 ts + SKILL.md | 诚实边界（空结果≠没有 / 状态带时间戳 / 不编造登记号） |
+| `clinicaltrials-intel-skill` | [opencare](https://github.com/opencare-skillhub/clinicaltrials-intel-skill) | **Apache-2.0** | 20 py + SKILL.md | 面向病友的三条推送约束（不诱导、不制造焦虑、可退订） |
+| `nccn-guideline-downloader` | [opencare](https://github.com/opencare-skillhub/nccn-guideline-downloader) | **Apache-2.0** | 2 py + SKILL.md | **版权硬约束**（只摘要点 + 给官方链接，绝不输出全文） |
+| `RAG-content-processor` | [opencare](https://github.com/opencare-skillhub/RAG-content-processor) | **Apache-2.0** | 36 py + SKILL.md | 生产前隐私闸门（`phi_scan`）+ 不入 `private/` |
+| `aura_health_profile` | [opencare](https://github.com/opencare-skillhub/aura_health_profile) | **MIT-0** | 13 py + SKILL.md | 数据落 `~/.qingnang/private/`（0700）；默认不联网 |
+| `getnote-openclaw` | [opencare](https://github.com/opencare-skillhub/getnote-openclaw) | **MIT** | 2 py + SKILL.md | 病友经验必须标「非医学证据」 |
+| `xyb_dicom_download_skills` | [opencare](https://github.com/opencare-skillhub/xyb_dicom_download_skills) | **Apache-2.0** | 6 py + SKILL.md | **影像数据不出机**；下载目录强指 `private/` |
+| `medical-desensitization` | [PancrePal](https://github.com/PancrePal-xiaoyibao/medical-desensitization) | **Apache-2.0** | 10 ts | 脱敏后才允许出机；脱敏不通过则**拒绝**后续处理 |
+| `maskdesk` | [PancrePal](https://github.com/PancrePal-xiaoyibao/maskdesk) | **Apache-2.0** | 23 ts | local-first 与青囊隐私铁律同频；**桌面应用如何被 Agent 调用**的用法说明 |
+| `PDAC-multi-agents-prompts` | [PancrePal](https://github.com/PancrePal-xiaoyibao/PDAC-multi-agents-prompts) | **Apache-2.0** | 提示词集 | 提示词**不得包含**诊断/剂量类指令 |
+
+**共 11 项**，合计 ~2.9MB（已剥离 `.git` / `node_modules` / `.venv` / `outputs` / `cache` / `*.log` / `.env*`）。
+
+**每项的适配层都是 `QINGNANG.md`**，内容五段：来源与许可 / 青囊五条红线落到本技能 / 病人数据红线 / 运行依赖 / 与主技能的关系。
+
+**上游代码一字未改**——因此 **不构成衍生作品**，只需保留上游 `LICENSE` 与版权声明（已随目录保留）。
+
+### 早期版本的做法（已废弃）
+
+> ⚠️ 本包 v0.1 首版曾把上述 4 个 skill（试验/指南）**拆解为 `references/` 知识文件**（称「方式 B」）。
+> 那是**降级**：可执行能力变成了阅读材料。已于 2026-10-14 改为原样引入，旧文件已删除。
 
 ---
 
-## 三、只登记、未并入代码（方式 C：许可隔离）
+## 三、已 vendor 但形态特殊（需知情）
+
+| 资产 | 许可 | 为什么特殊 | 处置 |
+|---|---|---|---|
+| [maskdesk](https://github.com/PancrePal-xiaoyibao/maskdesk) | Apache-2.0 | 是**完整 Electron 应用**，不是纯 skill。无 `SKILL.md` | 已 vendor（源码入包便于审计），**适配层说明「如何把它当能力用」**；不集成其 UI |
+| [medical-desensitization](https://github.com/PancrePal-xiaoyibao/medical-desensitization) | Apache-2.0 | 是 **TS 库**（无 `SKILL.md`），供其他工具调用 | 已 vendor，适配层说明调用方式 |
+| [PDAC-multi-agents-prompts](https://github.com/PancrePal-xiaoyibao/PDAC-multi-agents-prompts) | Apache-2.0 | 是**提示词集**（单文件），不是 skill | 已 vendor 作为提示词资产 |
+
+---
+
+## 三之二、只登记、未 vendor（许可隔离）
 
 | 资产 | 许可 | 为什么只登记 | 处置 |
 |---|---|---|---|
-| [ca199_toolbox_donated_by_lihb](https://github.com/PancrePal-xiaoyibao/ca199_toolbox_donated_by_lihb) | **AGPL-3.0** | AGPL 有传染性——链接即传染 | **不并入代码**。只在本表登记其存在与用途（CA19-9 指标趋势管理工具，本地处理无上传）。未来若纳入，须以**独立子进程 / 独立目录**形态隔离，并在发行物列明第三方许可 |
-| [MinerU-xyb](https://github.com/PancrePal-xiaoyibao/MinerU-xyb) / [mineru-tianshu](https://github.com/PancrePal-xiaoyibao/mineru-tianshu) | AGPL-3.0 / Apache-2.0(FORK) | 同上 + 体积大（GB 级模型权重） | Phase 3 再评估；原则：**独立子进程 + 独立 venv，不进主依赖树** |
-| [maskdesk](https://github.com/PancrePal-xiaoyibao/maskdesk) | Apache-2.0 | 是完整应用（Electron 桌面），不是能力（skill/MCP） | **只借鉴思路**（local-first 脱敏），不纳入 |
-| [little_green_card](https://github.com/PancrePal-xiaoyibao/little_green_card) | NONE | 是完整 React 应用 + 无许可 | 不纳入 |
-| [devil-chat](https://github.com/PancrePal-xiaoyibao/devil-chat) | NONE | 是游戏原型 + 无许可 | 不纳入 |
+| [ca199_toolbox_donated_by_lihb](https://github.com/PancrePal-xiaoyibao/ca199_toolbox_donated_by_lihb) | **AGPL-3.0** | AGPL 有传染性——链接即传染 | **不 vendor 代码**。只在本表登记其存在与用途（CA19-9 指标趋势管理，本地处理无上传）。未来若纳入，须**独立子进程 / 独立目录**隔离 |
+| [MinerU-xyb](https://github.com/PancrePal-xiaoyibao/MinerU-xyb) | AGPL-3.0 | 同上 + 体积大（GB 级模型权重） | Phase 3 再评估；原则：**独立子进程 + 独立 venv，不进主依赖树** |
+| [little_green_card](https://github.com/PancrePal-xiaoyibao/little_green_card) | NONE | 完整 React 应用 + 无许可 | 不纳入 |
+| [devil-chat](https://github.com/PancrePal-xiaoyibao/devil-chat) | NONE | 游戏原型 + 无许可 | 不纳入 |
 
 ---
 
@@ -66,11 +97,13 @@
 | `generic-image-gen-skills` | 同上 + 无 LICENSE |
 | 微信机器人系（`dify-on-wechat` / `dow_gewe_*` / `chatgpt-on-wechat-win` 等） | **非医学能力** + 运营基建（准入第 1、2 条） |
 | 社区官网 / 小程序 / 图床系（`miniapp-*` / `web` / `my-images` 等） | 同上 |
-| `xyb_dicom_download_skills` | **边界敏感**——DICOM 影像下载涉及患者影像数据流转。虽为 Apache-2.0，但与本包「数据不出机」铁律冲突，**暂不纳入**，留给未来的桌面端项目评估 |
-| `RAG-content-processor` | 是**内部生产工具**（文章下载→格式化→上传），不是面向病友的能力。Phase 3 做知识包生产时再考虑 |
 | `Medical-Record-Organizer` / `skill-HADS-accessment` | ⚠️ 无 LICENSE 文件 → 待上游补。**补后可重新评估**（两者都是医学相关能力，价值不低） |
-| `chinadrugtrials-collector` / `pancreatic-cancer-dailynews-skill` | ⚠️ 无 LICENSE 文件 → 待上游补 |
+| `chinadrugtrials-collector` / `chinadurgtrials` / `pancreatic-cancer-dailynews-skill` | ⚠️ 无 LICENSE 文件 → 待上游补 |
 | `ca199_toolbox_flutter` / `ca199_toolbox_mp` | ⚠️ 无 LICENSE + 与 `ca199_toolbox` 同源 → 以那个为准 |
+| `clinical-trial-matching` / `llm-wiki-pancrepal` / `openclaw_skills_pool` | ⚠️ 无 LICENSE 文件 |
+
+> **2026-10-14 修订说明**：v0.1 首版曾以「是应用不是能力」为由**拒绝** `RAG-content-processor`、`maskdesk`、`xyb_dicom_download_skills`。
+> 后修正判断：**「应用外壳」与「可用能力」是两件事**——不应因外壳是应用就丢掉其能力，正确处理是「vendor 源码 + 适配层说明如何当能力用」。三者现已引入，见 §二。
 
 ---
 

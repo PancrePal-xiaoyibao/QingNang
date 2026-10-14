@@ -742,6 +742,16 @@ async function doSource(opts) {
   say('  然后：   node scripts/qingnang.mjs doctor')
 }
 
+// 列出 skills/ 下的技能目录（每个都是一个可装载的 skill）
+function listSkillDirs() {
+  const base = join(REPO, 'skills')
+  if (!existsSync(base)) return []
+  return readdirSync(base, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
+    .map((e) => e.name)
+    .sort((a, b) => (a === 'qingnang' ? -1 : b === 'qingnang' ? 1 : a.localeCompare(b)))
+}
+
 // 宿主技能目录（跨平台）
 function hostSkillDir(host) {
   const home = os.homedir()
@@ -783,6 +793,8 @@ function doAgent(opts) {
   }
 
   const MARKER = 'qingnang-inject'
+  // 技能层清单：主技能 + 所有 vendor 进来的社区 skill
+  const skillDirs = listSkillDirs()
 
   if (host === 'codex') {
     const target = join(os.homedir(), '.codex', 'AGENTS.md')
@@ -791,6 +803,7 @@ function doAgent(opts) {
       `- 主注入：${join(srcDir, 'INJECT.md')}`,
       `- 搜索分流：${join(srcDir, 'SEARCH_RUNTIME.md')}`,
       `- 本机画像：${join(srcDir, 'HOST_PROFILE.md')}`,
+      `- 技能层：${skillDirs.length} 个（${skillDirs.join(' / ')}）`,
       `涉及医学检索时，先读搜索分流表再动手。`,
     ].join('\n')
     if (opts.dryRun) {
@@ -802,10 +815,12 @@ function doAgent(opts) {
   } else {
     const sdir = hostSkillDir(host)
     if (!sdir) die(`无法确定 ${host} 的技能目录`)
-    const dest = join(sdir, 'qingnang')
+
     if (opts.dryRun) {
-      say(`${C.dim}[dry-run] 将安装到 ${dest}（link=${!!opts.link}）${C.rst}`)
+      say(`${C.dim}[dry-run] 将安装 ${skillDirs.length} 个 skill 到 ${sdir}：${skillDirs.join(' / ')}${C.rst}`)
     } else {
+      // ① 主技能：逐文件装（支持 --link 软链）
+      const dest = join(sdir, 'qingnang')
       mkdirSync(dest, { recursive: true })
       for (const f of need) {
         const src = join(srcDir, f)
@@ -825,7 +840,19 @@ function doAgent(opts) {
         rmSync(rdst, { recursive: true, force: true })
         cpSync(rsrc, rdst, { recursive: true })
       }
-      ok(`已安装到 ${dest}（${need.length} 个注入文件 + references/）`)
+      ok(`主技能已装：${dest}（${need.length} 个注入文件 + references/）`)
+
+      // ② 社区 skill：整目录装（含各自 SKILL.md + 脚本 + QINGNANG.md 适配层）
+      let vendored = 0
+      for (const sd of skillDirs) {
+        if (sd === 'qingnang') continue
+        const from = join(REPO, 'skills', sd)
+        const to = join(sdir, sd)
+        rmSync(to, { recursive: true, force: true })
+        cpSync(from, to, { recursive: true })
+        vendored++
+      }
+      ok(`社区 skill 已装：${vendored} 个（${skillDirs.filter((s) => s !== 'qingnang').join(' / ')}）`)
     }
   }
 

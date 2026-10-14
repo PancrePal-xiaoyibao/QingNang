@@ -11,6 +11,23 @@
     "inject_bytes_max": 2048,
     "search_runtime_bytes_max": 8192,
     "skill_bytes_max": 14336,
+    "vendored_root": "skills/",
+    "vendored_count": 11,
+    "vendored": [
+      { "dir": "clinicaltrials-query-analysis", "upstream": "opencare-skillhub/clinicaltrials-query-analysis", "license": "Apache-2.0", "category": "临床试验" },
+      { "dir": "chictr-trials-collector", "upstream": "opencare-skillhub/chictr-trials-collector", "license": "Apache-2.0", "category": "临床试验" },
+      { "dir": "clinicaltrials-intel-skill", "upstream": "opencare-skillhub/clinicaltrials-intel-skill", "license": "Apache-2.0", "category": "临床试验" },
+      { "dir": "nccn-guideline-downloader", "upstream": "opencare-skillhub/nccn-guideline-downloader", "license": "Apache-2.0", "category": "临床指南" },
+      { "dir": "RAG-content-processor", "upstream": "opencare-skillhub/RAG-content-processor", "license": "Apache-2.0", "category": "知识生产" },
+      { "dir": "aura_health_profile", "upstream": "opencare-skillhub/aura_health_profile", "license": "MIT-0", "category": "健康管理" },
+      { "dir": "getnote-openclaw", "upstream": "opencare-skillhub/getnote-openclaw", "license": "MIT", "category": "笔记" },
+      { "dir": "xyb_dicom_download_skills", "upstream": "opencare-skillhub/xyb_dicom_download_skills", "license": "Apache-2.0", "category": "影像" },
+      { "dir": "medical-desensitization", "upstream": "PancrePal-xiaoyibao/medical-desensitization", "license": "Apache-2.0", "category": "病历隐私" },
+      { "dir": "maskdesk", "upstream": "PancrePal-xiaoyibao/maskdesk", "license": "Apache-2.0", "category": "病历隐私" },
+      { "dir": "PDAC-multi-agents-prompts", "upstream": "PancrePal-xiaoyibao/PDAC-multi-agents-prompts", "license": "Apache-2.0", "category": "提示词资产" }
+    ],
+    "vendored_adapter_file": "QINGNANG.md",
+    "vendored_by": "scripts/vendor-skills.mjs",
     "files": {
       "INJECT.md": {
         "bytes": 2026,

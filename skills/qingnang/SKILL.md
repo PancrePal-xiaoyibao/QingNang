@@ -50,6 +50,29 @@
 
 ## 3. 路由表
 
+### 3.1 先路由到「哪个技能」（第一跳）
+
+用户的问题进来，**先判属于哪个子技能**，再进 §3.2 定通道。
+
+| 问题落点 | 路由到 | 触发词（用户可能这么说） |
+|---|---|---|
+| **临床试验** | `clinicaltrials-query-analysis` / `chictr-trials-collector` | 「有没有在招的试验」「我能入组吗」「XX 靶点现状」 |
+| **试验情报订阅** | `clinicaltrials-intel-skill` | 「盯着新试验」「每周给我一份」「有变化提醒我」 |
+| **临床指南** | `nccn-guideline-downloader` | 「指南怎么说」「NCCN」「患者手册」 |
+| **病历整理 / 脱敏** | `Medical-Record-Organizer`＊ / `medical-desensitization` / `maskdesk` | 「帮我整理报告单」「多院病历汇总」「脱敏」 |
+| **影像** | `xyb_dicom_download_skills` | 「DICOM」「影像下载」「光盘导出」 |
+| **健康档案 / 指标** | `aura_health_profile` | 「复诊简报」「指标趋势」「健康档案」 |
+| **知识包生产** | `RAG-content-processor` | 「下载这篇文章入库」「打标签」 |
+| **笔记 / 经验沉淀** | `getnote-openclaw` | 「记到笔记」「整理成笔记」 |
+| **提示词资产** | `PDAC-multi-agents-prompts` | 「给我一套问医生的提示词」 |
+| **纯检索（无专属技能）** | 本技能直接走 §3.2 | 「XX 方案最新研究」「医保报不报」 |
+
+> ＊ = 因许可缺失（无 LICENSE）**未 vendor**，仅登记。见 `references/SOURCES.md` §五 许可债清单。
+
+**第一跳的确定性**：判不出落哪个技能时，**先走本技能 §3.2 的通用通道**，不要硬套子技能。
+
+### 3.2 再路由到「走哪条通道」（第二跳）
+
 | 问题类型 | 用户可能怎么问 | 去哪 | 通道（见 `SEARCH_RUNTIME.md`） |
 |---|---|---|---|
 | **文献类** | 「XX 方案的最新研究」「有没有论文支持」 | SEARCH_RUNTIME | 通道 3（+5 有凭据） |
@@ -95,6 +118,8 @@
 ---
 
 ## 6. 依赖与耦合（本 skill 用了哪些 MCP）
+
+### 6.1 本技能自己的 MCP
 
 按 `MERGE_CONTRACT.md` 的耦合契约，本 skill 声明：
 
