@@ -12,7 +12,8 @@
     "search_runtime_bytes_max": 8192,
     "skill_bytes_max": 14336,
     "vendored_root": "skills/",
-    "vendored_count": 11,
+    "vendored_count": 10,
+    "vendored_adapter_skill": "上游无 SKILL.md 时由青囊补，文件头标注「青囊编写，非上游」（见 vendor-skills.mjs 的 adapterSkill）",
     "vendored": [
       { "dir": "clinicaltrials-query-analysis", "upstream": "opencare-skillhub/clinicaltrials-query-analysis", "license": "Apache-2.0", "category": "临床试验" },
       { "dir": "chictr-trials-collector", "upstream": "opencare-skillhub/chictr-trials-collector", "license": "Apache-2.0", "category": "临床试验" },
@@ -23,8 +24,7 @@
       { "dir": "getnote-openclaw", "upstream": "opencare-skillhub/getnote-openclaw", "license": "MIT", "category": "笔记" },
       { "dir": "xyb_dicom_download_skills", "upstream": "opencare-skillhub/xyb_dicom_download_skills", "license": "Apache-2.0", "category": "影像" },
       { "dir": "medical-desensitization", "upstream": "PancrePal-xiaoyibao/medical-desensitization", "license": "Apache-2.0", "category": "病历隐私" },
-      { "dir": "maskdesk", "upstream": "PancrePal-xiaoyibao/maskdesk", "license": "Apache-2.0", "category": "病历隐私" },
-      { "dir": "PDAC-multi-agents-prompts", "upstream": "PancrePal-xiaoyibao/PDAC-multi-agents-prompts", "license": "Apache-2.0", "category": "提示词资产" }
+      { "dir": "maskdesk", "upstream": "PancrePal-xiaoyibao/maskdesk", "license": "Apache-2.0", "category": "病历隐私" }
     ],
     "vendored_adapter_file": "QINGNANG.md",
     "vendored_by": "scripts/vendor-skills.mjs",

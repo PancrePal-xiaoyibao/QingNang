@@ -237,12 +237,12 @@ skills/
 │   ├── MERGE_CONTRACT.md      ← 合并契约：准入四条 + 合并三种 + 耦合契约
 │   └── references/            ← 本包自写的厚参考（伦理 / 术语表 / 许可台账）
 │
-└── <11 个社区医学 skill>/      ← 原样引入（上游代码一字未改）
-    ├── SKILL.md               ← 上游文件（不改）
+└── <10 个社区医学 skill>/      ← 原样引入（上游代码一字未改）
+    ├── SKILL.md               ← 上游文件（无则青囊补，声明「青囊编写」）
     └── QINGNANG.md            ← 【青囊追加】适配层：许可 + 五条红线在本技能如何生效
 ```
 
-**十一一个社区 skill 清单**（引入脚本 `scripts/vendor-skills.mjs`）：
+**十个社区 skill 清单**（引入脚本 `scripts/vendor-skills.mjs`）：
 
 | 分类 | skill |
 |---|---|
@@ -253,7 +253,6 @@ skills/
 | 病历隐私 | `medical-desensitization` · `maskdesk` |
 | 影像 | `xyb_dicom_download_skills` |
 | 笔记 | `getnote-openclaw` |
-| 提示词资产 | `PDAC-multi-agents-prompts` |
 
 **离线依赖**：`vendor/node_modules/`（265 包 / 46MB）+ `vendor/VENDOR.json` 清单。
 引入脚本 `scripts/vendor-mcp.mjs`，校验 `--verify`。**目录名必须叫 node_modules**（Node 解析规则），见 ADR-015。

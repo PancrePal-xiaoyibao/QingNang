@@ -20,7 +20,7 @@
        ▼                  ▼
   ┌─────────────┐   ┌──────────────────┐
   │  技能层       │   │  MCP 能力层       │
-  │ 12 个 skill  │◄──┤ 7 通道 / 28 工具  │
+  │ 11 个 skill  │◄──┤ 7 通道 / 28 工具  │
   └─────────────┘   └──────────────────┘
        │                  │
        │  降级链           │  离线 vendor
@@ -84,7 +84,6 @@
 ## 三、技能层结构（1 主 + 11 社区）
 
 ### 3.1 为什么社区 skill 是「原样引入」而不是「拍平」
-
 社区 skill 自带 `SKILL.md` + 可执行脚本，**是能力，不是文档**。
 把可执行能力抽成 `references/*.md` 是**降级**——脚本跑不了，只剩"读一读"。
 
@@ -100,7 +99,7 @@ skills/
 │   ├── MERGE_CONTRACT.md            ← 准入纪律
 │   └── references/                  ← 本包自写的伦理 / 术语表 / 许可台账
 │
-└── <11 个社区 skill>/                ← 上游代码一字未改
+└── <10 个社区 skill>/                ← 上游代码一字未改
     ├── SKILL.md                     ← 上游文件
     ├── <上游脚本等>                  ← 上游文件
     └── QINGNANG.md                  ← 【青囊追加】适配层
@@ -338,7 +337,7 @@ QingNang/
 │   ├── manifest.json             ← ★ 唯一事实源（7 通道）
 │   └── healthcheck.mjs
 │
-├── skills/                       ← 12 个 skill（1 主 + 11 社区）
+├── skills/                       ← 11 个 skill（1 主 + 10 社区）
 ├── vendor/                       ← ★ 离线依赖（265 包 / 46MB）
 │   ├── VENDOR.json
 │   └── node_modules/
@@ -362,7 +361,7 @@ QingNang/
 |---|---|
 | `node scripts/qingnang.mjs fetch` | 校验 / 构建本地能力层（vendor 优先，零网络） |
 | `node scripts/qingnang.mjs deploy --mode=source` | 探测本机 + 建私有目录 |
-| `node scripts/qingnang.mjs deploy --mode=agent` | 装 12 个 skill 到宿主 |
+| `node scripts/qingnang.mjs deploy --mode=agent` | 装 11 个 skill 到宿主 |
 | `node scripts/qingnang.mjs doctor` | 九项体检 |
 | `node scripts/qingnang.mjs check` | 聚合自检 |
 | `node scripts/qingnang.mjs probe` | 本机探测 |

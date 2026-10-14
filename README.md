@@ -113,10 +113,11 @@ node scripts/qingnang.mjs doctor     # 逐项显示 ✓ 已配 / ⬜ 选填未�
 
 ## 🎁 部署后，你的 Agent 获得什么
 
-### 一、12 个 Skill
+### 一、11 个 Skill
 
-青囊 = **1 个主技能（总路由与伦理）+ 11 个社区医学技能（原样引入）**。
+青囊 = **1 个主技能（总路由与伦理）+ 10 个社区医学技能（原样引入）**。
 上游 skill 的 `SKILL.md` **一字未改**；青囊在每个目录里追加一份 `QINGNANG.md` 适配层，写明许可 + 青囊五条红线在这个技能上如何生效。
+其中 2 个上游不是 skill 形态（无 `SKILL.md`），青囊补了一份并在文件头**明确标注「青囊编写，非上游」**。
 
 #### 主技能
 
@@ -136,9 +137,11 @@ node scripts/qingnang.mjs doctor     # 逐项显示 ✓ 已配 / ⬜ 选填未�
 | `aura_health_profile` | 健康档案与复诊简报 | MIT-0 |
 | `getnote-openclaw` | 笔记沉淀（病友经验记录） | MIT |
 | `xyb_dicom_download_skills` | DICOM 影像下载与整理 | Apache-2.0 |
-| `medical-desensitization` | 医疗文本脱敏 | Apache-2.0 |
-| `maskdesk` | Local-first 病历脱敏工作台 | Apache-2.0 |
-| `PDAC-multi-agents-prompts` | 胰腺癌多智能体提示词集 | Apache-2.0 |
+| `maskdesk` | Local-first 病历脱敏工作台 | Apache-2.0 | ＊
+| `medical-desensitization` | 医疗文本脱敏 | Apache-2.0 | ＊ |
+
+> ＊ = 上游不是 skill 形态（`maskdesk` 是 Electron 应用、`medical-desensitization` 是 Next.js 应用），
+> 青囊补了适配 `SKILL.md` 并在文件头标注「青囊编写」。
 
 > 装完可以问 Agent：「**你现在有哪些青囊能力？**」——它会列出上面这些。
 > 完整清单与逐项说明：见 [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md)
@@ -217,7 +220,7 @@ node scripts/qingnang.mjs doctor     # 逐项显示 ✓ 已配 / ⬜ 选填未�
 
 ## 🔑 凭据申请
 
-**不填任何 Key，青囊已完整可用**（28 个工具 + 12 个 skill）。
+**不填任何 Key，青囊已完整可用**（28 个工具 + 11 个 skill）。
 
 | 变量 | 申请入口 | 不填的后果 |
 |---|---|---|

@@ -118,9 +118,11 @@
 | **A42** | M2 | 构建完成后**离线**仍能通过 `healthcheck.mjs`（不联网） | 🟢 | `node scripts/qingnang.mjs serve <id>` 直起本地入口，无 `npx` 联网 |
 | **A43** | M2 | **离线 vendor 完整性**（ADR-015）：`vendor/node_modules/` 含 7 个 MCP 全部入口包 | 🟢 | `vendor-mcp.mjs --verify` EXIT=0；265 包 / 46.4M；`check` 报出包数与保留平台 |
 | **A44** | M2 | **纯 vendor 可启动**：移走 `node_modules/` 后 5 条零凭据通道仍完成 `initialize` 握手 | 🟢 | 实测 `mv node_modules /tmp && serve {web_search,pubmed,openalex,bing_cn,unified_trial}` 全部握手成功 |
-| **A45** | M3 | **社区 skill 以原样引入**（非拍平成 references）：`skills/` 下 11 个可装载 skill 目录，各含上游 `SKILL.md` 或 `QINGNANG.md` | 🟢 | `vendor-skills.mjs` 引入 11 项；`deploy --mode=agent --dry-run` 列出 12 个 skill |
-| **A46** | M3 | **适配层齐备**：每个 vendor skill 目录均含 `QINGNANG.md`（写明许可 + 五条红线在本技能如何生效） | 🟢 | 11/11 均含；`check` 的 S1 断言未报违约 |
+| **A45** | M3 | **社区 skill 以原样引入**（非拍平成 references）：`skills/` 下 10 个社区 skill 目录，**每个都含合法 `SKILL.md`**（上游自带，或上游非 skill 形态时由青囊补并标注「青囊编写」） | 🟢 | `vendor-skills.mjs` 引入 10 项；`deploy --mode=agent --dry-run` 列出 11 个 skill |
+| **A46** | M3 | **适配层齐备**：每个 vendor skill 目录均含 `QINGNANG.md`（写明许可 + 五条红线在本技能如何生效） | 🟢 | 10/10 均含；`check` 的 S1 断言未报违约 |
 | **A47** | M1 | `AGENTS.md` §5 与 `CLAUDE.md` 逐字一致，且已反映多 skill 与 vendor 结构 | 🟢 | `cmp` EXIT=0 |
+| **A48** | M3 | **主技能 `SKILL.md` 含合法 frontmatter**（`name` + `description`）——否则宿主不会把青囊注册为 skill | 🟢 | 11/11 个 skill 首行均为 `---`，且 `name`/`description` 齐备 |
+| **A49** | M3 | **数字口径一致**：`skills/` 目录数 = 1 + `vendored_count`；各文档与 `MANIFEST.json` 口径一致 | 🟢 | 11 = 1 + 10；全文无「12 个 skill」残留 |
 
 ### 2.1 无法自动化的评审项（人工判定）
 
@@ -148,7 +150,7 @@
 | **V1.4** | **立项收尾 + 治理文档层（README / AGENTS.md / CLAUDE.md / CONTRIBUTING / LICENSE / MANIFEST）落盘 + 首次 commit/push** | M0 | ✅ | 2026-10-14 |
 | M1 | 仓库骨架与治理文件（含脚本骨架） | pre-M | 🟢 **骨架已落地**（待正式验收） | 2026-10-14 |
 | M2 | 部署与体检脚本（含 `probe-host.sh`） | M1 | 🟢 **骨架已落地**（待正式验收） | 2026-10-14 |
-| M3 | 技能层 v0（三注入 + 合并契约 + 参考层 + **11 个社区 skill**） | M1 | 🟢 **骨架已落地** | 2026-10-14 |
+| M3 | 技能层 v0（三注入 + 合并契约 + 参考层 + **10 个社区 skill**） | M1 | 🟢 **骨架已落地** | 2026-10-14 |
 | M4 | **七条搜索通道**接入（五条零凭据） | M1,M2 | 🟢 **5/7 已握手通过**（KnowS/get-biji 待许可债） | 2026-10-14 |
 | M5 | 路由与降级链 | M3,M4 | 🟢 **骨架已落地** | 2026-10-14 |
 | M6 | 第一道敏感信息闸 | M1 | 🟢 **配置已落地** | 2026-10-14 |
@@ -181,6 +183,8 @@
 | **P13** | **社区 skill 全量核查**（本轮新增） | 用 `gh repo list` 枚举两 org：`opencare-skillhub` 42 个 + `PancrePal-xiaoyibao` 130 个。医学相关且许可干净的 **11 项**已 vendor 引入；**12 项**因无 LICENSE 文件列为许可债（见 `SOURCES.md` §五） |
 | **P14** | **vendor 目录名踩坑**（实测） | 包放 `vendor/mcp/<pkg>/` 时 `import 'dotenv'` 报 `ERR_MODULE_NOT_FOUND` —— Node 只认逐级祖先里的 `node_modules/` 目录。**必须放 `vendor/node_modules/<pkg>/`**。已写入 ADR-015 |
 | **P15** | **跨平台体积取舍**（实测） | koffi 含 18 个平台二进制（28M）。裁掉非目标平台后仍需保留 6 个（`linux/darwin/win32` × `x64/arm64`）——**产物要装到别人机器上，跨平台优先于体积**。另裁 sourcemap（32M）+ TS 类型（2.8M）+ `pdf-parse` 多余 3 个 pdf.js 版本（21M），最终 131M → **46.4M** |
+| **P16** | **上游空仓库核查**（本轮新增） | `PDAC-multi-agents-prompts` 宣称是「提示词集」，实测 `gh api .../contents/` 只有 `LICENSE`（11357B），仓库 5KB，仅 1 个 initial commit，唯一分支 main。**无可引入之物** → 已移出 vendor 清单，避免重复评估 |
+| **P17** | **宿主加载约定核查**（本轮新增） | 宿主靠 `SKILL.md` 的 frontmatter（`name` + `description`）识别 skill。发现两类真缺陷：① 主技能 `SKILL.md` **无 frontmatter** → 青囊入口会失效；② `maskdesk` / `medical-desensitization` 上游非 skill 形态，无 `SKILL.md` → 装了也不被加载。两处均已修（青囊补适配 `SKILL.md`，文件头标注「青囊编写，非上游」） |
 
 ---
 

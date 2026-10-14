@@ -5,7 +5,7 @@
 
 ---
 
-## 一、技能层（12 个 Skill）
+## 一、技能层（11 个 Skill）
 
 ### 1.1 主技能（1 个，必需）
 
@@ -26,7 +26,7 @@
 **为什么物理分离**：常驻上下文越短，Agent 注意力预算越省。
 有自动断言守住——`check` 会验证 `INJECT.md` **不出现任何工具包名**。
 
-### 1.2 社区医学技能（11 个，原样引入）
+### 1.2 社区医学技能（10 个，原样引入）
 
 引入方式：**上游代码一字未改**（`git clone --depth 1` → 剥离依赖/产物），
 青囊在每个目录追加一份 `QINGNANG.md` 适配层。
@@ -42,11 +42,8 @@
 | 6 | `aura_health_profile` | 慢病健康档案：散乱检验单/医嘱 → 清晰健康档案 + 复诊简报 | MIT-0 | opencare-skillhub |
 | 7 | `getnote-openclaw` | 笔记沉淀（病友经验记录与检索） | MIT | opencare-skillhub |
 | 8 | `xyb_dicom_download_skills` | DICOM 影像下载与整理 | Apache-2.0 | opencare-skillhub |
-| 9 | `medical-desensitization` | 医疗文本脱敏（TS 库） | Apache-2.0 | PancrePal-xiaoyibao |
-| 10 | `maskdesk` | Local-first 病历脱敏工作台（Electron 应用，源码入包供审计） | Apache-2.0 | PancrePal-xiaoyibao |
-| 11 | `PDAC-multi-agents-prompts` | 胰腺癌多智能体提示词集 | Apache-2.0 | PancrePal-xiaoyibao |
-
-**`QINGNANG.md` 适配层的五段结构**：
+| 9 | `medical-desensitization` | 医疗文本与病历脱敏（Go 后端 + Next.js 前端）＊ | Apache-2.0 | PancrePal-xiaoyibao |
+| 10 | `maskdesk` | Local-first 病历脱敏工作台（Electron）＊ | Apache-2.0 | PancrePal-xiaoyibao |
 
 1. 来源与许可（上游 URL + SPDX + 引入方式 + 是否改动）
 2. **青囊五条红线在本技能上如何生效**（M1 不做诊断 / M2 不给剂量 / M3 隐私不出机 / M4 急症先就医 / M5 出处标注）

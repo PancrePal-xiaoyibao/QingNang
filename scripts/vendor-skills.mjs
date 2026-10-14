@@ -19,7 +19,14 @@ const args = Object.fromEntries(process.argv.slice(2).map(a => {
 const SRC = args.src || '/tmp/qn-repos';
 const DRY = !!args['dry-run'];
 
-/** 许可证干净、允许 vendor 的清单。许可缺失的一律不进（许可债）。 */
+/**
+ * 许可证干净、允许 vendor 的清单。许可缺失的一律不进（许可债）。
+ *
+ * `adapterSkill`：上游不是 skill 形态（无 SKILL.md）时，由青囊补一份。
+ *   为什么补：宿主靠 SKILL.md 的 frontmatter 识别 skill。
+ *   没有它就只是「一堆文件躺在技能目录里」，Agent 看不到。
+ *   补的那份 **明确标注「青囊编写，非上游」**，且不改上游任何文件。
+ */
 const VENDORED = [
   { repo: 'clinicaltrials-query-analysis', org: 'opencare-skillhub', license: 'Apache-2.0', cat: '临床试验' },
   { repo: 'chictr-trials-collector',       org: 'opencare-skillhub', license: 'Apache-2.0', cat: '临床试验' },
@@ -29,10 +36,38 @@ const VENDORED = [
   { repo: 'aura_health_profile',           org: 'opencare-skillhub', license: 'MIT-0',      cat: '健康管理' },
   { repo: 'getnote-openclaw',              org: 'opencare-skillhub', license: 'MIT',        cat: '笔记' },
   { repo: 'xyb_dicom_download_skills',     org: 'opencare-skillhub', license: 'Apache-2.0', cat: '影像' },
-  { repo: 'medical-desensitization',       org: 'PancrePal-xiaoyibao', license: 'Apache-2.0', cat: '病历隐私' },
-  { repo: 'maskdesk',                      org: 'PancrePal-xiaoyibao', license: 'Apache-2.0', cat: '病历隐私' },
-  { repo: 'PDAC-multi-agents-prompts',     org: 'PancrePal-xiaoyibao', license: 'Apache-2.0', cat: '提示词资产' },
+  {
+    repo: 'medical-desensitization', org: 'PancrePal-xiaoyibao', license: 'Apache-2.0', cat: '病历隐私',
+    adapterSkill: {
+      name: 'medical-desensitization',
+      description: '医疗文本与病历脱敏。用于在把病历内容交给任何外部服务之前，先把姓名、身份证号、手机号、住院号、病案号等可识别信息抹掉。当用户提到「脱敏」「去标识化」「病历不能外传」「打码」时使用。属于青囊医学能力包。',
+      upstreamForm: 'Next.js 全栈应用（前端 + Go 后端）',
+      howToUse: [
+        '前端页面：`npm install && npm run dev`（本目录内运行，端口见上游 README）',
+        '后端：`cd backend && go run ./cmd/server`',
+        '也可**只借用其脱敏规则**：核心逻辑在上游 `backend/internal/app/desensitize.go` 与前端 `src/` 的规则表，读到规则后由 Agent 就地执行',
+      ],
+    },
+  },
+  {
+    repo: 'maskdesk', org: 'PancrePal-xiaoyibao', license: 'Apache-2.0', cat: '病历隐私',
+    adapterSkill: {
+      name: 'maskdesk',
+      description: 'Local-first 病历脱敏工作台。用于在本机完成病历导入、自动识别敏感项、逐条确认、导出脱敏稿的完整流程，数据全程不出机。当用户提到「病历脱敏工作台」「批量脱敏」「本地脱敏」时使用。属于青囊医学能力包。',
+      upstreamForm: 'Electron 桌面应用',
+      howToUse: [
+        '作为应用起：本目录内 `npm install && npm start`（Electron 窗口）',
+        '**作为能力用（青囊推荐）**：借用其 `renderer/lib/detectors.ts`（识别）与 `renderer/lib/rules-engine.ts`（规则），由 Agent 就地调用',
+        '它的 local-first 设计与青囊「数据不出机」铁律同频',
+      ],
+    },
+  },
 ];
+
+// ── 曾列入但**上游实为空仓库**，已移出（2026-10-14 核查，避免重复评估）──
+// PDAC-multi-agents-prompts：上游 5KB，仅 LICENSE，1 个 initial commit，无任何提示词内容。
+//   `gh api repos/.../contents/` 实测只有 LICENSE；所有分支仅 main。
+//   ⇒ 无可引入之物。待上游真正填充内容后再评估。见 references/SOURCES.md §五。
 
 /** 不带进包的东西：版本控制、依赖、产物、凭据、缓存 */
 const EXCLUDE = [
@@ -120,6 +155,66 @@ function adapter({ repo, org, license, cat }) {
 `;
 }
 
+/**
+ * 上游不是 skill 形态时，由青囊补一份 SKILL.md。
+ *
+ * 为什么必须补：宿主（Claude Code / pi / 其他）靠 SKILL.md 的 frontmatter
+ * 识别 skill。没有它，目录里就算有一堆文件，Agent 也【看不到这个技能】。
+ * 不补 = 装了等于白装。
+ *
+ * 与 QINGNANG.md 的分工：
+ *   SKILL.md    → 给【宿主】看：我是谁、什么时候用、怎么用
+ *   QINGNANG.md → 给【Agent】看：许可 + 青囊红线叠加约束
+ *
+ * 本文件明确标注「青囊编写，非上游」——不冒充上游产物。
+ */
+function adapterSkill(v) {
+  const a = v.adapterSkill;
+  return `---
+name: ${a.name}
+description: ${a.description}
+---
+
+# ${a.name}
+
+> ⚠️ **本文件由青囊编写，不是上游产物。**
+> 上游 \`${v.org}/${v.repo}\` 的形态是「${a.upstreamForm}」，没有 \`SKILL.md\`。
+> 宿主靠 \`SKILL.md\` 识别 skill，缺了它这个目录就不会被加载——所以青囊补了这份。
+> 上游代码本身**一字未改**；本文件与目录内的 \`QINGNANG.md\` 是青囊的叠加层。
+>
+> 许可：**${v.license}**（上游 \`LICENSE\` 已随目录保留）
+
+## 何时用本技能
+
+| 用户说 | 用本技能 |
+|---|---|
+| 与本目录职责相关的问题 | ✅ |
+| 涉及诊断 / 剂量 / 急症判断 | ❌ 触发主技能红线 M1/M2/M4 |
+| 需要对病历原文做外部处理 | ❌ 先过本技能脱敏，否则不得出机 |
+
+## 怎么用
+
+${a.howToUse.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+## 医学红线（**不可协商**）
+
+| # | 红线 | 落到本技能 |
+|---|---|---|
+| **M1** | 不做诊断 | 只做信息处理，不输出诊断结论 |
+| **M2** | 不给用药建议 | 不给剂量、不提示换药停药 |
+| **M3** | **隐私不出机** | **本技能的核心职责就是保障这条**；处理结果只能写 \`~/.qingnang/private/\`（0700） |
+| **M4** | 急症先就医 | 命中红旗症状先转介就医 |
+| **M5** | 出处标注 | 每条处理结果标明「脱敏后 / 原样」与时间 |
+
+## 与其他部分的关系
+
+- **入口**：医学问题先进 \`skills/qingnang/SKILL.md\`（总路由）
+- **适配层**：同目录 \`QINGNANG.md\`（许可 + 红线叠加说明）
+- **本机画像**：\`skills/qingnang/HOST_PROFILE.md\`
+- **搜索通道**：\`skills/qingnang/SEARCH_RUNTIME.md\`
+`;
+}
+
 const rows = [];
 for (const v of VENDORED) {
   const from = join(SRC, v.repo);
@@ -130,6 +225,11 @@ for (const v of VENDORED) {
   await mkdir(to, { recursive: true });
   await copyTree(from, to);
   await writeFile(join(to, 'QINGNANG.md'), adapter(v), 'utf8');
+
+  // 上游不是 skill 形态时，补一份适配 SKILL.md（否则宿主识别不到）
+  if (v.adapterSkill) {
+    await writeFile(join(to, 'SKILL.md'), adapterSkill(v), 'utf8');
+  }
   const size = await dirSize(to);
   rows.push({ ...v, status: 'OK', size, files: (await readdir(to)).length });
 }
