@@ -1,0 +1,35 @@
+{
+  "name": "qingnang",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "青囊 QingNang —— 小胰宝社区 · 医学能力资产包。本 package.json 的唯一职责：在本地构建 MCP 能力层环境。",
+  "license": "SEE LICENSE IN LICENSE",
+  "packageManager": "pnpm@10.15.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build:env": "pnpm install --frozen-lockfile=false",
+    "rebuild:env": "pnpm install --force",
+    "doctor": "bash scripts/doctor.sh",
+    "deploy:source": "bash scripts/deploy.sh --mode=source",
+    "deploy:agent": "bash scripts/deploy.sh --mode=agent",
+    "probe": "bash scripts/probe-host.sh",
+    "check": "bash scripts/check.sh",
+    "vendor:fetch": "bash scripts/fetch-vendor.sh"
+  },
+  "_comment_engines": "unified-trial-mcp 要求 node >=22.13.0，是所有 MCP 里最严的约束，故整体取该下限。",
+  "dependencies": {
+    "open-websearch": "2.2.0",
+    "bing-cn-mcp": "1.0.2",
+    "mcp-pubmed-llm-server": "3.0.0",
+    "openalex-mcp-server": "1.0.5",
+    "unified-trial-mcp": "0.3.1"
+  },
+  "_comment_deps": "【版本必须钉死，不允许 ^ 或 ~】理由：MCP 行为变化会直接影响医疗信息的检索结果，不可接受漂移。升版必须走 CHG（见任务目录）。",
+  "_comment_reserved": {
+    "@xiaoyibao_npm/knows-mcp-server": "通道5·高级医学证据 —— 需凭据 + 上游待补 LICENSE，未纳入",
+    "get-biji-mcp": "通道6·病友经验 —— 上游双仓库均无 LICENSE，未纳入"
+  }
+}

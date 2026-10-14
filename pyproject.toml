@@ -1,0 +1,24 @@
+# 青囊 · Python 能力层环境
+# 职责：为需要 Python 的能力（PDF 解析、本地 RAG 索引、指标抽取等）提供项目活动区内的独立环境。
+# 环境位置：<repo>/.venv/（首选 uv venv，兜底 python -m venv）
+#
+# 设计原则（见 AGENTS.md §1 降级链铁律）：
+#   首选 uv → 次选 python -m venv → 兜底 conda
+#   任何一档失败都不影响 JS 侧的六条搜索通道
+#
+# ⚠️ 当前（v0.1）Python 侧依赖为空 —— Phase 3 才引入（MinerU PDF 解析 / 本地 RAG）。
+#    本文件提前就位，是为了让部署脚本的 Python 环境构建路径**现在就能被验证**，
+#    而不是等到 Phase 3 才发现装不上。
+
+[project]
+name = "qingnang-pyenv"
+version = "0.1.0"
+description = "青囊 Python 能力层环境（Phase 3 起承载 PDF 解析与本地 RAG）"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+# Phase 3 起启用（MinerU 许可需隔离，见 SPEC §3.3 合并方式 C）
+# pdf = ["mineru>=4.0.0"]
+# rag = ["sqlite-utils>=3.35"]
+dev = ["pytest>=8.0", "ruff>=0.6"]

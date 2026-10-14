@@ -1,0 +1,19 @@
+# 青囊 · gitleaks 规则（敏感信息闸第二层：凭据扫描）
+# 与 scripts/phi_scan.py 分工：gitleaks 管通用凭据，phi_scan 管中文医疗 PHI
+title = "青囊 QingNang gitleaks config"
+[extend]
+useDefault = true
+
+[allowlist]
+description = "青囊允许清单"
+paths = [
+  # 示例模板天然含 KEY 名（值为空）
+  '''\.env\.example$''',
+  # 归一化/占位符常量的定义处
+  '''scripts/phi_scan\.py$''',
+  '''\.gitleaks\.toml$''',
+]
+regexes = [
+  # 占位符形式
+  '''(?i)(your[_-]?api[_-]?key|xxx+|placeholder|changeme|<.*>)''',
+]

@@ -1,0 +1,32 @@
+# 青囊 · pre-commit 闸（敏感信息第一道）
+# 安装： pip install pre-commit && pre-commit install
+# 手动全量跑： pre-commit run --all-files
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        name: gitleaks（凭据/密钥扫描）
+
+  - repo: local
+    hooks:
+      - id: phi-scan
+        name: phi-scan（中文医疗 PHI/PII 扫描）
+        entry: python3 scripts/phi_scan.py --staged
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: qingnang-check
+        name: qingnang-check（清单/体积/隐私/治理一致性）
+        entry: bash scripts/check.sh --only=manifest,skill,isolation,whitelist
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: agents-mirror
+        name: AGENTS.md ≡ CLAUDE.md
+        entry: bash -c 'cmp -s AGENTS.md CLAUDE.md || { echo "❌ AGENTS.md 与 CLAUDE.md 必须逐字一致"; exit 1; }'
+        language: system
+        pass_filenames: false
+        always_run: true

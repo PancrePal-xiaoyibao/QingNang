@@ -1,0 +1,223 @@
+{
+  "schema_version": 2,
+  "_comment": "青囊 MCP 唯一事实源。所有通道声明都在此，不许在其他地方另维护一份。准入三重门：许可在白名单内 + npm 可达 + 凭据可降级。",
+  "license_whitelist": [
+    "MIT",
+    "Apache-2.0",
+    "ISC",
+    "BSD-3-Clause"
+  ],
+  "servers": [
+    {
+      "id": "web_search",
+      "display_name": "青囊·通用网页搜索",
+      "server_name": "qingnang_web",
+      "package": "open-websearch",
+      "version": "2.2.0",
+      "license": "Apache-2.0",
+      "license_note": "上游仓库 LICENSE 文件为 Apache-2.0；package.json 的 license 字段缺失，以上游 LICENSE 文件为准",
+      "upstream": "https://github.com/Aas-ee/open-webSearch",
+      "channel": 1,
+      "transport": "stdio",
+      "command": [
+        "bash",
+        "mcp-servers/launch/web_search"
+      ],
+      "env": [
+        {
+          "key": "MODE",
+          "value": "stdio",
+          "required": false,
+          "effect_when_missing": "默认 both，会额外监听 HTTP 3000 端口"
+        },
+        {
+          "key": "SEARCH_MODE",
+          "value": "request",
+          "required": false,
+          "effect_when_missing": "auto：可能启用 Playwright（需 Chromium）；强制 request 可完全避开浏览器依赖"
+        },
+        {
+          "key": "USE_PROXY",
+          "value_from": "host_profile",
+          "required": false
+        },
+        {
+          "key": "PROXY_URL",
+          "value_from": "host_profile",
+          "required": false
+        }
+      ],
+      "proxy": {
+        "supported": true,
+        "env_keys": [
+          "USE_PROXY",
+          "PROXY_URL"
+        ],
+        "upstream_default": "http://127.0.0.1:7890",
+        "auto_fill_from": "skills/qingnang/HOST_PROFILE.md 的网络/代理 小节",
+        "two_stage_note": "上游 README 明确：安装期代理（npm --proxy，拉包用）与运行期代理（USE_PROXY/PROXY_URL，搜索用）是两件独立的事，必须分两步配"
+      },
+      "degrade_to": "bing_cn",
+      "health": {
+        "kind": "mcp_initialize",
+        "timeout_s": 30
+      },
+      "command_note": "指向本地垫片（scripts/lib/make-launch-shims.py 生成）→ node_modules 内的真实入口。支持完全离线启动，且与 pnpm/npm 目录布局解耦。",
+      "launch_shim": "mcp-servers/launch/web_search",
+      "args": []
+    },
+    {
+      "id": "bing_cn",
+      "display_name": "青囊·中文网页搜索",
+      "server_name": "qingnang_bing",
+      "package": "bing-cn-mcp",
+      "version": "1.0.2",
+      "license": "MIT",
+      "upstream": "https://github.com/yan5236/bing-cn-mcp-server",
+      "channel": 2,
+      "transport": "stdio",
+      "command": [
+        "bash",
+        "mcp-servers/launch/bing_cn"
+      ],
+      "env": [],
+      "proxy": {
+        "supported": false
+      },
+      "degrade_to": null,
+      "health": {
+        "kind": "mcp_initialize",
+        "timeout_s": 30
+      },
+      "command_note": "指向本地垫片（scripts/lib/make-launch-shims.py 生成）→ node_modules 内的真实入口。支持完全离线启动，且与 pnpm/npm 目录布局解耦。",
+      "launch_shim": "mcp-servers/launch/bing_cn",
+      "args": []
+    },
+    {
+      "id": "pubmed",
+      "display_name": "青囊·医学文献检索",
+      "server_name": "qingnang_pubmed",
+      "package": "mcp-pubmed-llm-server",
+      "version": "3.0.0",
+      "license": "MIT",
+      "license_note": "上游 repo 标 Apache-2.0，npm 元数据写 MIT（不一致）；两者皆宽松，按 npm 实际分发为准",
+      "upstream": "https://github.com/PancrePal-xiaoyibao/mcp-pubmed-server-pancrpal",
+      "channel": 3,
+      "transport": "stdio",
+      "command": [
+        "bash",
+        "mcp-servers/launch/pubmed"
+      ],
+      "env": [
+        {
+          "key": "NCBI_API_KEY",
+          "required": false,
+          "effect_when_missing": "限速 3 req/s（个人够用）"
+        }
+      ],
+      "proxy": {
+        "supported": false
+      },
+      "degrade_to": null,
+      "health": {
+        "kind": "mcp_initialize",
+        "timeout_s": 30
+      },
+      "command_note": "指向本地垫片（scripts/lib/make-launch-shims.py 生成）→ node_modules 内的真实入口。支持完全离线启动，且与 pnpm/npm 目录布局解耦。",
+      "launch_shim": "mcp-servers/launch/pubmed",
+      "args": []
+    },
+    {
+      "id": "openalex",
+      "display_name": "青囊·学术文献（开放获取）",
+      "server_name": "qingnang_openalex",
+      "package": "openalex-mcp-server",
+      "version": "1.0.5",
+      "license": "ISC",
+      "upstream": "https://github.com/SecretRichGarden/openAlex-mcp",
+      "channel": 3,
+      "transport": "stdio",
+      "command": [
+        "bash",
+        "mcp-servers/launch/openalex"
+      ],
+      "env": [
+        {
+          "key": "OPENALEX_EMAIL",
+          "required": false,
+          "effect_when_missing": "使用共享池，速度较慢；填邮箱可获得更快配额"
+        }
+      ],
+      "proxy": {
+        "supported": false
+      },
+      "degrade_to": null,
+      "health": {
+        "kind": "mcp_initialize",
+        "timeout_s": 30
+      },
+      "command_note": "指向本地垫片（scripts/lib/make-launch-shims.py 生成）→ node_modules 内的真实入口。支持完全离线启动，且与 pnpm/npm 目录布局解耦。",
+      "launch_shim": "mcp-servers/launch/openalex",
+      "args": []
+    },
+    {
+      "id": "unified_trial",
+      "display_name": "青囊·临床试验检索",
+      "server_name": "qingnang_trial",
+      "package": "unified-trial-mcp",
+      "version": "0.3.1",
+      "license": "MIT",
+      "upstream": "https://github.com/opencare-skillhub/unified-trial-search-mcp-service",
+      "channel": 4,
+      "transport": "stdio",
+      "command": [
+        "bash",
+        "mcp-servers/launch/unified_trial"
+      ],
+      "env": [],
+      "proxy": {
+        "supported": false
+      },
+      "degrade_to": null,
+      "health": {
+        "kind": "mcp_initialize",
+        "timeout_s": 30
+      },
+      "command_note": "指向本地垫片（scripts/lib/make-launch-shims.py 生成）→ node_modules 内的真实入口。支持完全离线启动，且与 pnpm/npm 目录布局解耦。",
+      "launch_shim": "mcp-servers/launch/unified_trial",
+      "args": [
+        "serve"
+      ],
+      "args_note": "实测：unified-trial-mcp 不带子命令时只打印帮助，必须 `serve` 才启动 MCP stdio 服务。"
+    }
+  ],
+  "reserved": [
+    {
+      "id": "knows",
+      "display_name": "青囊·高级医学证据",
+      "server_name": "qingnang_knows",
+      "package": "@xiaoyibao_npm/knows-mcp-server",
+      "channel": 5,
+      "credential_required": true,
+      "env": [
+        "KNOWS_API_KEY",
+        "KNOWS_API_BASE_URL"
+      ],
+      "reason": "需凭据（走社区公众号/小程序申请）；且上游 repo 待补 LICENSE 文件",
+      "degrade_to": "pubmed",
+      "note": "设计上已预留：凭据到手后从 reserved 移入 servers 即可，无需改动其他文件"
+    },
+    {
+      "id": "get_biji",
+      "display_name": "青囊·病友经验",
+      "server_name": "qingnang_biji",
+      "package": "get-biji-mcp",
+      "channel": 6,
+      "credential_required": false,
+      "reason": "上游双仓库均无 LICENSE 文件（npm 声明 MIT）",
+      "degrade_to": null
+    }
+  ],
+  "_comment_build": "构建方式：bash scripts/fetch-vendor.sh（JS 侧首选 pnpm、次选 npm、兜底 yarn；Python 侧首选 uv venv、次选 python -m venv、兜底 conda）。见 AGENTS.md §1 降级链铁律。",
+  "_comment_offline": "依赖装好后，全部通道可离线启动（不再走 npx 联网拉包）。"
+}
